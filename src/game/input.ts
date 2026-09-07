@@ -10,24 +10,55 @@ export const input = {
   interactPulse: false,
   sensitivity: 1,
   touch: false,
+  // true = o mouse/teclado pertencem à interface (loja), não ao jogo 3D
+  uiMode: false,
 };
 
 const keys = new Set<string>();
 
 function axisFromKeys() {
+  if (input.uiMode) {
+    input.moveX = 0;
+    input.moveZ = 0;
+    return;
+  }
   input.moveX = (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) - (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0);
   input.moveZ = (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0) - (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0);
 }
 
+let lockTarget: HTMLElement | null = null;
+
+/** Alterna entre GAME MODE e MERCHANT MODE (mouse livre para a interface). */
+export function setUiMode(active: boolean) {
+  input.uiMode = active;
+  if (active) {
+    keys.clear();
+    input.moveX = 0;
+    input.moveZ = 0;
+    input.shooting = false;
+    input.reloadPulse = false;
+    if (typeof document !== "undefined" && document.pointerLockElement) document.exitPointerLock?.();
+  } else if (!input.touch && lockTarget) {
+    try {
+      lockTarget.requestPointerLock?.();
+    } catch {
+      /* o navegador pode exigir um novo clique */
+    }
+  }
+}
+
 export function setJoystick(x: number, z: number) {
+  if (input.uiMode) return;
   input.moveX = x;
   input.moveZ = z;
 }
 
 export function addLook(dx: number, dy: number) {
+  if (input.uiMode) return;
   input.yaw -= dx * 0.0022 * input.sensitivity;
   input.pitch = Math.max(-0.9, Math.min(0.55, input.pitch - dy * 0.0018 * input.sensitivity));
 }
+
 
 export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
   const onDown = (e: KeyboardEvent) => {
