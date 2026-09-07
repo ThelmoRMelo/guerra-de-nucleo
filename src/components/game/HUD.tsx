@@ -80,7 +80,7 @@ export function HUD({ engine }: { engine: GameEngine }) {
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-xl bg-hud-panel/80 px-4 py-2 text-center backdrop-blur">
         <div className="text-sm font-bold tracking-wide text-hud-text">🔫 {weapon.nome}</div>
         <div className="text-xs text-hud-text/80">
-          {hud.reloading ? "RECARREGANDO…" : `${hud.ammo}/${hud.magazine}`}
+          {"∞"}
         </div>
       </div>
 
