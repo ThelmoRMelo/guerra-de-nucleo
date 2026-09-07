@@ -43,17 +43,27 @@ export function GameCanvas() {
     input.sensitivity = sensitivity;
   }, [sensitivity]);
 
+  // MERCHANT MODE: com a loja (ou pausa) aberta o mouse pertence só à interface
+  useEffect(() => {
+    setUiMode(shopOpen || paused);
+  }, [shopOpen, paused]);
+
   useEffect(() => {
     const el = wrapper.current;
     if (!el) return;
     input.touch = window.matchMedia("(pointer: coarse)").matches;
     if (input.touch) return;
     return attachDesktopInput(el, () => {
-      setShopOpen(false);
+      // ESC fecha a loja primeiro; só depois pausa a partida
+      if (useGame.getState().shopOpen) {
+        setShopOpen(false);
+        return;
+      }
       setPaused(true);
       document.exitPointerLock?.();
     });
   }, [setPaused, setShopOpen]);
+
 
   const dpr: [number, number] = quality === "baixa" ? [0.6, 1] : quality === "media" ? [1, 1.5] : [1, 2];
 
