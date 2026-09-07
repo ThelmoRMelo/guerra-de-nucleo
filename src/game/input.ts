@@ -122,9 +122,11 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
 
 export function resetInput() {
   keys.clear();
+  input.uiMode = false;
   input.moveX = 0;
   input.moveZ = 0;
   input.shooting = false;
   input.reloadPulse = false;
+
   input.interactPulse = false;
 }
