@@ -6,7 +6,7 @@ import { HUD } from "./HUD";
 import { TouchControls } from "./TouchControls";
 import { ShopPanel } from "./ShopPanel";
 import { GameEngine } from "@/game/engine";
-import { attachDesktopInput, input, resetInput } from "@/game/input";
+import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
 import { playSound, setSfxVolume } from "@/game/audio";
 import { useGame } from "@/game/store";
 
