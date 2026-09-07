@@ -16,9 +16,12 @@ export function GameCanvas() {
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
+  const shopOpen = useGame((s) => s.shopOpen);
+  const paused = useGame((s) => s.paused);
   const setEngine = useGame((s) => s.setEngine);
   const setPaused = useGame((s) => s.setPaused);
   const setShopOpen = useGame((s) => s.setShopOpen);
+
 
   const engine = useMemo(() => {
     const e = new GameEngine(playerName);
