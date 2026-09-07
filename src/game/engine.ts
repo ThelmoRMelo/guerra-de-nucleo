@@ -213,29 +213,22 @@ export class GameEngine {
     return Math.round(WEAPONS[p.weapon].magazine * (1 + p.upgrades.municao * 0.5));
   }
 
-  startReload(p: Participant) {
-    if (p.reloadUntil > this.time || p.ammo >= this.magazineOf(p)) return;
-    const w = WEAPONS[p.weapon];
-    p.reloadUntil = this.time + w.reloadTime * (1 - p.upgrades.recarga * 0.2);
-    if (!p.isBot) this.onSound?.("reload");
+  startReload(_p: Participant) {
+    // Munição infinita: recarga desativada.
   }
 
   tryShoot(p: Participant, yaw: number, pitch: number) {
     if (!p.alive || this.time < p.nextShotAt || p.burstLeft > 0) return;
-    if (this.time < p.reloadUntil) return;
     if (p.protectedUntil > this.time && !p.isBot) {
       // proteção de spawn impede causar dano — sai da proteção ao atirar
       p.protectedUntil = 0;
-    }
-    if (p.ammo <= 0) {
-      this.startReload(p);
-      return;
     }
     const w = WEAPONS[p.weapon];
     p.aimYaw = yaw;
     p.aimPitch = pitch;
     p.nextShotAt = this.time + w.cooldown;
-    p.ammo -= 1;
+    p.ammo = this.magazineOf(p);
+    p.reloadUntil = 0;
     if (w.shots > 1 && w.burstDelay > 0) {
       this.fireOnce(p, yaw, pitch);
       p.burstLeft = w.shots - 1;
