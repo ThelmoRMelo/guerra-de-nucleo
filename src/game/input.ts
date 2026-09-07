@@ -61,14 +61,19 @@ export function addLook(dx: number, dy: number) {
 
 
 export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
+  lockTarget = target;
   const onDown = (e: KeyboardEvent) => {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
     if (e.code === "Escape") {
       onEscape();
       return;
     }
+    if (e.code === "KeyE") {
+      input.interactPulse = true;
+      return;
+    }
+    if (input.uiMode) return;
     if (e.code === "KeyR") input.reloadPulse = true;
-    if (e.code === "KeyE") input.interactPulse = true;
     keys.add(e.code);
     axisFromKeys();
   };
@@ -77,6 +82,7 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
     axisFromKeys();
   };
   const onMouseDown = (e: MouseEvent) => {
+    if (input.uiMode) return;
     if (e.button === 0) {
       input.shooting = true;
       if (document.pointerLockElement !== target) target.requestPointerLock?.();
@@ -86,6 +92,7 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
     input.shooting = false;
   };
   const onMouseMove = (e: MouseEvent) => {
+    if (input.uiMode) return;
     if (document.pointerLockElement === target) addLook(e.movementX, e.movementY);
   };
   const onBlur = () => {
@@ -93,6 +100,7 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
     axisFromKeys();
     input.shooting = false;
   };
+
 
   window.addEventListener("keydown", onDown);
   window.addEventListener("keyup", onUp);
