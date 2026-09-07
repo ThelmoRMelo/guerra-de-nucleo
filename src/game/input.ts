@@ -115,8 +115,10 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
     window.removeEventListener("mouseup", onMouseUp);
     window.removeEventListener("mousemove", onMouseMove);
     window.removeEventListener("blur", onBlur);
+    if (lockTarget === target) lockTarget = null;
   };
 }
+
 
 export function resetInput() {
   keys.clear();
