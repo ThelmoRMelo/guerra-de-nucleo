@@ -20,8 +20,16 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/65 p-4 font-display">
-      <div className="w-full max-w-lg rounded-2xl border border-border/60 bg-card p-4 shadow-2xl">
+    <div
+      className="fixed inset-0 z-30 flex cursor-default items-center justify-center bg-black/65 p-4 font-display"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={() => setShopOpen(false)}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl border border-border/60 bg-card p-4 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-black">COMERCIANTE</h2>
           <div className="flex items-center gap-3 text-sm font-bold">
