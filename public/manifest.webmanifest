@@ -1,0 +1,16 @@
+{
+  "name": "Núcleo de Fogo",
+  "short_name": "Núcleo",
+  "description": "Batalha 3D em terceira pessoa: 8 ilhas, armas de fogo e destruição de núcleos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#101826",
+  "theme_color": "#101826",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
