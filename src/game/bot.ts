@@ -142,8 +142,19 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       } else {
         moveTarget = pathStep(engine, b, brain, `gen${b.island}`, ISLAND_NODES[b.island]!.genId);
       }
+      // nada a fazer aqui: volta ao comportamento ofensivo
+      if (moveTarget && dist2D(b.pos, moveTarget) < 1.6) {
+        brain.path = [];
+        brain.goalKey = "";
+        const t = chooseTargetIsland(engine, b);
+        if (t >= 0) {
+          brain.targetIsland = t;
+          b.botState = "ATACAR_BASE";
+        }
+      }
       break;
     }
+
     case "ATACAR_BASE":
     case "NUCLEO": {
       const t = brain.targetIsland;
