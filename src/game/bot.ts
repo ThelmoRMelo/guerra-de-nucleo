@@ -356,25 +356,27 @@ function steerTo(
       brain.strafeUntil = engine.time + 0.8 + Math.random() * 1.2;
       brain.strafeSide = Math.random() < 0.5 ? 1 : -1;
     }
-    ux += -uz * brain.strafeSide * 0.9;
-    uz += ux * 0 + (len > 0.001 ? dx / Math.max(len, 0.001) : 0) * brain.strafeSide * 0.9;
+    const px = -uz * brain.strafeSide;
+    const pz = ux * brain.strafeSide;
+    ux += px * 0.9;
+    uz += pz * 0.9;
   }
 
-  // desvio de obstáculos (repulsão)
+  // desvio de obstáculos (repulsão + contorno tangencial)
   for (const o of nearObstacles(b.pos)) {
     const ox = b.pos.x - o.x;
     const oz = b.pos.z - o.z;
     const d = Math.hypot(ox, oz) || 0.001;
-    const влиян = o.r + 2.2;
-    if (d < влиян) {
-      const w = (влиян - d) / влиян;
+    const influence = o.r + 2.2;
+    if (d < influence) {
+      const w = (influence - d) / influence;
       ux += (ox / d) * w * 2.2;
       uz += (oz / d) * w * 2.2;
-      // desliza tangencialmente para contornar
       ux += (-oz / d) * w * brain.detourSide * 1.2;
       uz += (ox / d) * w * brain.detourSide * 1.2;
     }
   }
+
 
   // separação de outros personagens
   for (const o of engine.participants) {
