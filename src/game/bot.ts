@@ -387,20 +387,24 @@ function steerTo(
     uz += pz * 0.9;
   }
 
-  // desvio de obstáculos (repulsão + contorno tangencial)
-  for (const o of nearObstacles(b.pos)) {
-    const ox = b.pos.x - o.x;
-    const oz = b.pos.z - o.z;
-    const d = Math.hypot(ox, oz) || 0.001;
-    const influence = o.r + 2.2;
-    if (d < influence) {
-      const w = (influence - d) / influence;
-      ux += (ox / d) * w * 2.2;
-      uz += (oz / d) * w * 2.2;
-      ux += (-oz / d) * w * brain.detourSide * 1.2;
-      uz += (ox / d) * w * brain.detourSide * 1.2;
+  // desvio de obstáculos (repulsão + contorno tangencial) — relaxa perto do alvo
+  const closeToTarget = len < 3.2;
+  if (!closeToTarget) {
+    for (const o of nearObstacles(b.pos)) {
+      const ox = b.pos.x - o.x;
+      const oz = b.pos.z - o.z;
+      const d = Math.hypot(ox, oz) || 0.001;
+      const influence = o.r + 2.2;
+      if (d < influence) {
+        const w = (influence - d) / influence;
+        ux += (ox / d) * w * 2.2;
+        uz += (oz / d) * w * 2.2;
+        ux += (-oz / d) * w * brain.detourSide * 1.2;
+        uz += (ox / d) * w * brain.detourSide * 1.2;
+      }
     }
   }
+
 
   // separação de outros personagens
   for (const o of engine.participants) {
