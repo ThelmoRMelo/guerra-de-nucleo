@@ -22,6 +22,7 @@ interface Brain {
   targetIsland: number;
   repathAt: number;
   stuckTimer: number;
+  stuckCount: number;
   lastX: number;
   lastZ: number;
   detourUntil: number;
@@ -56,6 +57,7 @@ export function ensureBrain(b: Participant, index: number): Brain {
       targetIsland: -1,
       repathAt: 0,
       stuckTimer: 0,
+      stuckCount: 0,
       lastX: b.pos.x,
       lastZ: b.pos.z,
       detourUntil: 0,
@@ -206,9 +208,18 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       brain.repathAt = 0;
       brain.detourSide = Math.random() < 0.5 ? 1 : -1;
       brain.detourUntil = engine.time + 0.7 + Math.random() * 0.5;
+      brain.stuckCount += 1;
+      if (brain.stuckCount >= 2) {
+        // objetivo impossível: escolhe outro
+        brain.stuckCount = 0;
+        brain.targetIsland = -1;
+        b.botState = "REPOSICIONAR";
+        b.botDecisionAt = engine.time + 0.3;
+      }
     }
   } else if (moved > 0.03) {
     brain.stuckTimer = 0;
+    brain.stuckCount = 0;
   }
 
   // ---- disparo (com erro de mira por dificuldade, sem atravessar paredes)
@@ -351,7 +362,7 @@ function followPath(b: Participant, brain: Brain): Vec3 {
   }
   const wp = brain.path[brain.pathIdx];
   if (!wp) return b.pos;
-  if (brain.pathIdx === brain.path.length - 1 && dist2D(b.pos, wp) < 1.5) return b.pos;
+  if (brain.pathIdx === brain.path.length - 1 && dist2D(b.pos, wp) < 2.6) return b.pos;
   return wp;
 }
 
