@@ -343,7 +343,6 @@ function pathStepTo(engine: GameEngine, b: Participant, brain: Brain, pos: Vec3)
   return dist2D(b.pos, pos) < 14 && hasLineOfSight(b.pos, pos) ? pos : wp;
 }
 
-
 function followPath(b: Participant, brain: Brain): Vec3 {
   while (brain.pathIdx < brain.path.length - 1) {
     const wp = brain.path[brain.pathIdx]!;
