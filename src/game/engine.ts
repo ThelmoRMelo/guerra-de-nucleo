@@ -7,7 +7,7 @@ import {
   type UpgradeId,
   type WeaponId,
 } from "./config";
-import { CENTER_GEN, ISLANDS, dist2D, isOnGround, randomPointOnIsland } from "./world";
+import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
 import { ensureBrain, updateBot, type Difficulty } from "./bot";
 
@@ -256,7 +256,11 @@ export class GameEngine {
     const hit = this.raycast(origin, dir, w.range, p);
     const end = hit
       ? hit.point
-      : { x: origin.x + dir.x * w.range, y: origin.y + dir.y * w.range, z: origin.z + dir.z * w.range };
+      : {
+          x: origin.x + dir.x * w.range,
+          y: origin.y + dir.y * w.range,
+          z: origin.z + dir.z * w.range,
+        };
     this.tracers.push({ id: nextId(), from: origin, to: end, born: this.time, color: p.color });
     if (!hit) return;
     if (hit.kind === "player") {
@@ -271,7 +275,8 @@ export class GameEngine {
   }
 
   private raycast(origin: Vec3, dir: Vec3, range: number, shooter: Participant) {
-    let best: { dist: number; point: Vec3; kind: "player" | "core"; target: Participant } | null = null;
+    let best: { dist: number; point: Vec3; kind: "player" | "core"; target: Participant } | null =
+      null;
     const consider = (dist: number, kind: "player" | "core", target: Participant) => {
       if (dist < 0 || dist > range) return;
       if (best && best.dist <= dist) return;
@@ -279,7 +284,11 @@ export class GameEngine {
         dist,
         kind,
         target,
-        point: { x: origin.x + dir.x * dist, y: origin.y + dir.y * dist, z: origin.z + dir.z * dist },
+        point: {
+          x: origin.x + dir.x * dist,
+          y: origin.y + dir.y * dist,
+          z: origin.z + dir.z * dist,
+        },
       };
     };
     for (const o of this.participants) {
@@ -293,7 +302,12 @@ export class GameEngine {
         if (d !== null) consider(d, "core", o);
       }
     }
-    return best as { dist: number; point: Vec3; kind: "player" | "core"; target: Participant } | null;
+    return best as {
+      dist: number;
+      point: Vec3;
+      kind: "player" | "core";
+      target: Participant;
+    } | null;
   }
 
   damagePlayer(target: Participant, amount: number, from: Participant) {
@@ -329,7 +343,9 @@ export class GameEngine {
       );
     } else {
       target.respawnAt = this.time + TUNING.respawnTime;
-      this.pushEvent(`${from ? `${from.name} eliminou ` : ""}${target.name}${from ? "" : " morreu"}`);
+      this.pushEvent(
+        `${from ? `${from.name} eliminou ` : ""}${target.name}${from ? "" : " morreu"}`,
+      );
     }
   }
 

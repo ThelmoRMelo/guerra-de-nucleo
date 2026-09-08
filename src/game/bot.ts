@@ -1,7 +1,13 @@
 // IA dos bots: objetivos, pathfinding, steering, combate e personalidades.
 import { TUNING, WEAPONS, type UpgradeId, type WeaponId } from "./config";
 import { ISLANDS, dist2D, isOnGround } from "./world";
-import { ISLAND_NODES, OBSTACLES as OBSTACLE_CACHE, findPath, hasLineOfSight, obstacleAt } from "./nav";
+import {
+  ISLAND_NODES,
+  OBSTACLES as OBSTACLE_CACHE,
+  findPath,
+  hasLineOfSight,
+  obstacleAt,
+} from "./nav";
 import type { Participant, Vec3 } from "./types";
 import type { GameEngine } from "./engine";
 
@@ -104,7 +110,8 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
         const ideal = Math.min(w.range * 0.55, 22);
         const los = hasLineOfSight(b.pos, e.pos);
         if (!los || d > ideal * 1.25) moveTarget = e.pos;
-        else if (d < ideal * 0.45) moveTarget = { x: b.pos.x * 2 - e.pos.x, y: 0, z: b.pos.z * 2 - e.pos.z };
+        else if (d < ideal * 0.45)
+          moveTarget = { x: b.pos.x * 2 - e.pos.x, y: 0, z: b.pos.z * 2 - e.pos.z };
         if (los && d <= w.range) shootAt = { x: e.pos.x, y: e.pos.y + 1.1, z: e.pos.z };
       } else b.botState = "REPOSICIONAR";
       break;
@@ -340,8 +347,8 @@ function steerTo(
   dt: number,
   combat: boolean,
 ) {
-  let dx = target.x - b.pos.x;
-  let dz = target.z - b.pos.z;
+  const dx = target.x - b.pos.x;
+  const dz = target.z - b.pos.z;
   let len = Math.hypot(dx, dz);
   if (len < 0.8 && !combat) {
     b.moving = false;
@@ -376,7 +383,6 @@ function steerTo(
       uz += (ox / d) * w * brain.detourSide * 1.2;
     }
   }
-
 
   // separação de outros personagens
   for (const o of engine.participants) {
