@@ -109,9 +109,9 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
         const w = WEAPONS[b.weapon];
         const ideal = Math.min(w.range * 0.55, 22);
         const los = hasLineOfSight(b.pos, e.pos);
-        if (!los || d > ideal * 1.25) moveTarget = e.pos;
-        else if (d < ideal * 0.45)
+        if (d < ideal * 0.6)
           moveTarget = { x: b.pos.x * 2 - e.pos.x, y: 0, z: b.pos.z * 2 - e.pos.z };
+        else moveTarget = e.pos; // aproxima/orbita — nunca fica parado atirando
         if (los && d <= w.range) shootAt = { x: e.pos.x, y: e.pos.y + 1.1, z: e.pos.z };
       } else b.botState = "REPOSICIONAR";
       break;
@@ -129,12 +129,16 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       break;
     }
     case "COLETAR": {
-      const pk = nearestPickup(engine, b, 70);
+      // sem diamantes: o centro do mapa é a única fonte
+      const wantCenter = b.diamond < 5;
+      const pk = nearestPickup(engine, b, 70, wantCenter);
       if (pk) {
         moveTarget =
           dist2D(b.pos, pk.pos) < 22 && hasLineOfSight(b.pos, pk.pos)
             ? pk.pos
             : pathStepTo(engine, b, brain, pk.pos);
+      } else if (wantCenter) {
+        moveTarget = pathStep(engine, b, brain, `ring${b.island}`, ISLAND_NODES[b.island]!.ringId);
       } else {
         moveTarget = pathStep(engine, b, brain, `gen${b.island}`, ISLAND_NODES[b.island]!.genId);
       }
@@ -154,10 +158,11 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       if (d < 18 && hasLineOfSight(b.pos, core, 3)) {
         shootAt = { x: core.x, y: 1.5, z: core.z };
         b.botState = "NUCLEO";
-        if (d > 12) moveTarget = core;
-        else combat = true; // circula em volta do núcleo
+        moveTarget = core;
+        combat = d < 12; // circula em volta do núcleo
       } else {
         const nodes = ISLAND_NODES[t]!;
+
         const nodeId = brain.slot % 2 === 0 ? nodes.coreId : nodes.centerId;
         moveTarget = pathStep(engine, b, brain, `atk${t}${nodeId}`, nodeId);
       }
