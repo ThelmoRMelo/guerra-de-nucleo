@@ -339,7 +339,7 @@ function pathStepTo(engine: GameEngine, b: Participant, brain: Brain, pos: Vec3)
       : ISLAND_NODES[bestIsland]!.centerId;
   const wp = pathStep(engine, b, brain, `pk${nodeId}`, nodeId);
   // trecho final: já chegou ao waypoint, segue direto até o recurso
-  if (dist2D(b.pos, wp) < 2.5) return pos;
+  if (dist2D(b.pos, wp) < 2.5 && dist2D(b.pos, pos) < 20) return pos;
   return dist2D(b.pos, pos) < 14 && hasLineOfSight(b.pos, pos) ? pos : wp;
 }
 
