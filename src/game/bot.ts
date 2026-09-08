@@ -405,7 +405,6 @@ function steerTo(
     }
   }
 
-
   // separação de outros personagens
   for (const o of engine.participants) {
     if (o.id === b.id || !o.alive || o.eliminated) continue;
@@ -432,7 +431,7 @@ function steerTo(
   uz /= len;
 
   // sonda de chão/obstáculo: procura a direção livre mais próxima da desejada
-  const dir = freeDirection(b.pos, ux, uz);
+  const dir = freeDirection(b.pos, ux, uz, closeToTarget ? 0.05 : 0.5);
   if (!dir) {
     b.moving = false;
     return;
@@ -444,7 +443,12 @@ function steerTo(
 
 const PROBE_ANGLES = [0, 0.35, -0.35, 0.7, -0.7, 1.1, -1.1, 1.6, -1.6, 2.2, -2.2, Math.PI];
 
-function freeDirection(pos: Vec3, ux: number, uz: number): { x: number; z: number } | null {
+function freeDirection(
+  pos: Vec3,
+  ux: number,
+  uz: number,
+  margin: number,
+): { x: number; z: number } | null {
   for (const a of PROBE_ANGLES) {
     const cos = Math.cos(a);
     const sin = Math.sin(a);
@@ -455,7 +459,7 @@ function freeDirection(pos: Vec3, ux: number, uz: number): { x: number; z: numbe
     const farX = pos.x + dx * 2.8;
     const farZ = pos.z + dz * 2.8;
     if (!isOnGround(nearX, nearZ) || !isOnGround(farX, farZ)) continue;
-    if (obstacleAt(nearX, nearZ, 0.5)) continue;
+    if (obstacleAt(nearX, nearZ, margin)) continue;
     return { x: dx, z: dz };
   }
   return null;
