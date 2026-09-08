@@ -6,7 +6,18 @@ export interface Vec3 {
   z: number;
 }
 
-export type BotState = "IDLE" | "COLETAR" | "COMPRAR" | "DEFENDER" | "ATACAR" | "CENTRO" | "FUGIR";
+export type BotState =
+  | "IDLE"
+  | "COLETAR"
+  | "COMPRAR"
+  | "DEFENDER"
+  | "ATACAR"
+  | "PERSEGUIR"
+  | "ATACAR_BASE"
+  | "NUCLEO"
+  | "REPOSICIONAR"
+  | "CENTRO"
+  | "FUGIR";
 
 export interface Participant {
   id: string;

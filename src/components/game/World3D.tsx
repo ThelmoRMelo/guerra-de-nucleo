@@ -132,7 +132,7 @@ export function World3D() {
           </group>
           {/* árvores decorativas */}
           {[0, 1, 2].map((i) => {
-            const a = isl.angle + Math.PI + (i - 1) * 0.8;
+            const a = isl.angle + Math.PI / 2 + (i - 1) * 0.55;
             const r = TUNING.islandRadius - 2.2;
             return (
               <group key={i} position={[Math.cos(a) * r, 0, Math.sin(a) * r]}>
