@@ -1,7 +1,7 @@
 // IA dos bots: objetivos, pathfinding, steering, combate e personalidades.
 import { TUNING, WEAPONS, type UpgradeId, type WeaponId } from "./config";
 import { ISLANDS, dist2D, isOnGround } from "./world";
-import { ISLAND_NODES, findPath, hasLineOfSight, obstacleAt } from "./nav";
+import { ISLAND_NODES, OBSTACLES as OBSTACLE_CACHE, findPath, hasLineOfSight, obstacleAt } from "./nav";
 import type { Participant, Vec3 } from "./types";
 import type { GameEngine } from "./engine";
 
@@ -440,8 +440,6 @@ function nearObstacles(pos: Vec3) {
   }
   return out;
 }
-
-import { OBSTACLES as OBSTACLE_CACHE } from "./nav";
 
 // ---------------------------------------------------------------- percepção
 
