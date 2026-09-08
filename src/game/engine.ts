@@ -9,6 +9,7 @@ import {
 } from "./config";
 import { CENTER_GEN, ISLANDS, dist2D, isOnGround, randomPointOnIsland } from "./world";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
+import { ensureBrain, updateBot, type Difficulty } from "./bot";
 
 let uid = 1;
 const nextId = () => uid++;
@@ -36,6 +37,7 @@ export class GameEngine {
   hits: Hit[] = [];
   events: GameEvent[] = [];
   status: MatchStatus = "running";
+  difficulty: Difficulty = "normal";
   playerId = "p0";
   private genTimers: number[] = [];
   private genDiamondTimers: number[] = [];
@@ -58,6 +60,7 @@ export class GameEngine {
         ),
       );
     }
+    for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
     this.genTimers = ISLANDS.map(() => Math.random() * 2);
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 6);
   }
@@ -157,7 +160,7 @@ export class GameEngine {
     if (input.shooting) this.tryShoot(p, input.yaw, input.pitch);
   }
 
-  private moveEntity(p: Participant, dx: number, dz: number, dt: number) {
+  moveEntity(p: Participant, dx: number, dz: number, dt: number) {
     const speed = this.speedOf(p);
     const nx = p.pos.x + dx * speed * dt;
     const nz = p.pos.z + dz * speed * dt;
@@ -449,171 +452,7 @@ export class GameEngine {
   // ---------------------------------------------------------------- bots
 
   private updateBot(dt: number, b: Participant) {
-    if (!b.alive || b.eliminated) return;
-    const isl = ISLANDS[b.island]!;
-
-    if (this.time >= b.botDecisionAt) {
-      b.botDecisionAt = this.time + 0.6 + Math.random() * 0.8;
-      const enemy = this.nearestEnemy(b, TUNING.botReactionRange);
-      const coreUnderAttack = b.coreHp > 0 && b.coreHp < TUNING.coreMaxHp;
-      if (b.hp < 35 && enemy) b.botState = "FUGIR";
-      else if (enemy) {
-        b.botState = "ATACAR";
-        b.botTargetId = enemy.id;
-      } else if (coreUnderAttack && dist2D(b.pos, isl.core) > 18 && Math.random() < 0.5)
-        b.botState = "DEFENDER";
-      else if (this.botWants(b)) b.botState = "COMPRAR";
-      else if (b.iron > 60 || Math.random() < 0.35) b.botState = "CENTRO";
-      else b.botState = "COLETAR";
-    }
-
-    let target: Vec3 | null = null;
-    let shootAt: Vec3 | null = null;
-
-    switch (b.botState) {
-      case "FUGIR": {
-        const e = this.nearestEnemy(b, 60);
-        if (e) {
-          target = {
-            x: b.pos.x + (b.pos.x - e.pos.x),
-            y: 0,
-            z: b.pos.z + (b.pos.z - e.pos.z),
-          };
-          if (!isOnGround(target.x, target.z)) target = isl.spawn;
-        } else target = isl.spawn;
-        break;
-      }
-      case "ATACAR": {
-        const e = this.participants.find((p) => p.id === b.botTargetId);
-        if (e && e.alive && !e.eliminated) {
-          const d = dist2D(b.pos, e.pos);
-          const w = WEAPONS[b.weapon];
-          if (d > w.range * 0.6) target = e.pos;
-          else if (d < 6) target = { x: b.pos.x - (e.pos.x - b.pos.x), y: 0, z: b.pos.z - (e.pos.z - b.pos.z) };
-          shootAt = { x: e.pos.x, y: e.pos.y + 1.1, z: e.pos.z };
-        } else b.botState = "COLETAR";
-        break;
-      }
-      case "DEFENDER":
-        target = isl.core;
-        break;
-      case "COMPRAR":
-        target = isl.shop;
-        if (dist2D(b.pos, isl.shop) < 4) {
-          this.botBuy(b);
-          b.botState = "COLETAR";
-        }
-        break;
-      case "CENTRO": {
-        const pk = this.nearestPickup(b, true);
-        target = pk ? pk.pos : CENTER_GEN;
-        // ataca núcleo inimigo próximo quando estiver longe de casa
-        const enemyCore = this.nearestEnemyCore(b, 26);
-        if (enemyCore) {
-          const core = ISLANDS[enemyCore.island]!.core;
-          target = core;
-          if (dist2D(b.pos, core) < 20) shootAt = { x: core.x, y: 1.5, z: core.z };
-        }
-        break;
-      }
-      default: {
-        const pk = this.nearestPickup(b, false);
-        target = pk ? pk.pos : ISLANDS[b.island]!.generator;
-      }
-    }
-
-    if (target) {
-      const dx = target.x - b.pos.x;
-      const dz = target.z - b.pos.z;
-      const len = Math.hypot(dx, dz);
-      if (len > 1.2) {
-        let ux = dx / len;
-        let uz = dz / len;
-        if (!isOnGround(b.pos.x + ux * 1.5, b.pos.z + uz * 1.5)) {
-          // desvia em direção ao centro do mapa (as pontes levam ao centro)
-          const cl = Math.hypot(b.pos.x, b.pos.z) || 1;
-          ux = -b.pos.x / cl;
-          uz = -b.pos.z / cl;
-        }
-        b.moving = true;
-        b.yaw = Math.atan2(-ux, -uz);
-        this.moveEntity(b, ux, uz, dt);
-      } else b.moving = false;
-    } else b.moving = false;
-
-    if (shootAt) {
-      const dx = shootAt.x - b.pos.x;
-      const dz = shootAt.z - b.pos.z;
-      const dy = shootAt.y - (b.pos.y + 1.4);
-      const d = Math.hypot(dx, dz);
-      const yaw = Math.atan2(-dx, -dz);
-      b.yaw = yaw;
-      const pitch = Math.atan2(dy, d);
-      if (d <= WEAPONS[b.weapon].range) this.tryShoot(b, yaw, pitch);
-    }
-    if (b.ammo <= 0) this.startReload(b);
-  }
-
-  private botWants(b: Participant) {
-    for (const id of ["sniper", "rifle", "shotgun", "metralhadora"] as WeaponId[]) {
-      if (this.canBuyWeapon(b, id)) return true;
-    }
-    return b.iron > 90;
-  }
-
-  private botBuy(b: Participant) {
-    for (const id of ["sniper", "rifle", "metralhadora", "shotgun"] as WeaponId[]) {
-      if (this.canBuyWeapon(b, id)) {
-        this.buyWeapon(b, id);
-        return;
-      }
-    }
-    for (const id of ["velocidade", "armadura", "nucleo"] as UpgradeId[]) {
-      if (this.buyUpgrade(b, id)) return;
-    }
-  }
-
-  private nearestEnemy(b: Participant, range: number) {
-    let best: Participant | null = null;
-    let bd = range;
-    for (const p of this.participants) {
-      if (p.id === b.id || !p.alive || p.eliminated || p.protectedUntil > this.time) continue;
-      const d = dist2D(b.pos, p.pos);
-      if (d < bd) {
-        bd = d;
-        best = p;
-      }
-    }
-    return best;
-  }
-
-  private nearestEnemyCore(b: Participant, range: number) {
-    let best: Participant | null = null;
-    let bd = range;
-    for (const p of this.participants) {
-      if (p.id === b.id || p.coreHp <= 0) continue;
-      const d = dist2D(b.pos, ISLANDS[p.island]!.core);
-      if (d < bd) {
-        bd = d;
-        best = p;
-      }
-    }
-    return best;
-  }
-
-  private nearestPickup(b: Participant, center: boolean) {
-    let best: Pickup | null = null;
-    let bd = center ? 999 : 45;
-    for (const pk of this.pickups) {
-      if (center && Math.hypot(pk.pos.x, pk.pos.z) > TUNING.centerRadius + 4) continue;
-      if (!center && dist2D(pk.pos, ISLANDS[b.island]!.center) > TUNING.islandRadius + 3) continue;
-      const d = dist2D(b.pos, pk.pos);
-      if (d < bd) {
-        bd = d;
-        best = pk;
-      }
-    }
-    return best;
+    updateBot(this, b, dt);
   }
 
   // ---------------------------------------------------------------- fim
