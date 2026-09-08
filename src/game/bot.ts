@@ -496,7 +496,6 @@ function nearestPickup(engine: GameEngine, b: Participant, range: number, prefer
   return best;
 }
 
-
 // ---------------------------------------------------------------- economia
 
 const WEAPON_ORDER: WeaponId[] = ["sniper", "rifle", "metralhadora", "shotgun"];
