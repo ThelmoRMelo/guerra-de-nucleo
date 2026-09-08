@@ -279,8 +279,8 @@ function decide(engine: GameEngine, b: Participant, brain: Brain, enemy: Partici
     b.botState = "COMPRAR";
     return;
   }
-  const needsResources = onlyPistol && b.iron < 50;
-  if (needsResources || (pers !== "AGRESSIVO" && b.iron < 30 && Math.random() < 0.6)) {
+  const needsResources = onlyPistol && b.diamond < 35;
+  if (needsResources || (pers !== "AGRESSIVO" && b.diamond < 20 && Math.random() < 0.6)) {
     b.botState = "COLETAR";
     return;
   }
@@ -299,14 +299,16 @@ function chooseTargetIsland(engine: GameEngine, b: Participant) {
   let best = -1;
   let bestScore = -Infinity;
   for (const p of engine.participants) {
-    if (p.island === b.island || p.coreHp <= 0) continue;
+    // Participantes humanos e bots são alvos válidos; somente o próprio núcleo é ignorado.
+    if (p.id === b.id || p.island === b.island || p.coreHp <= 0) continue;
     const core = ISLANDS[p.island]!.core;
     const route = dist2D(b.pos, { x: 0, y: 0, z: 0 }) + dist2D({ x: 0, y: 0, z: 0 }, core);
     const defenders = engine.participants.filter(
       (o) => o.id !== b.id && o.alive && !o.eliminated && dist2D(o.pos, core) < 16,
     ).length;
     const damaged = (TUNING.coreMaxHp - p.coreHp) * 0.8;
-    const score = 200 - route * 0.9 - defenders * 18 + damaged;
+    const humanTargetBonus = p.isBot ? 0 : 35;
+    const score = 200 - route * 0.9 - defenders * 18 + damaged + humanTargetBonus;
     if (score > bestScore) {
       bestScore = score;
       best = p.island;
@@ -534,7 +536,7 @@ const WEAPON_ORDER: WeaponId[] = ["sniper", "rifle", "metralhadora", "shotgun"];
 
 function canBuySomething(engine: GameEngine, b: Participant) {
   for (const id of WEAPON_ORDER) if (engine.canBuyWeapon(b, id)) return true;
-  return b.iron >= 80;
+  return b.diamond >= 20;
 }
 
 function botBuy(engine: GameEngine, b: Participant) {

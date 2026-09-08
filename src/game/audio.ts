@@ -44,9 +44,6 @@ export function playSound(name: string) {
     case "hurt":
       beep(140, 0.15, "sawtooth", 0.15, 70);
       break;
-    case "iron":
-      beep(520, 0.08, "triangle", 0.12);
-      break;
     case "diamond":
       beep(880, 0.12, "triangle", 0.14, 1200);
       break;

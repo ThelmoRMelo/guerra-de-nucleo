@@ -14,7 +14,7 @@ export interface WeaponDef {
   magazine: number;
   reloadTime: number;
   coreMultiplier: number;
-  price: { iron: number; diamond: number } | null;
+  price: { diamond: number } | null;
 }
 
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
@@ -44,7 +44,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     magazine: 20,
     reloadTime: 1.8,
     coreMultiplier: 1,
-    price: { iron: 50, diamond: 2 },
+    price: { diamond: 35 },
   },
   shotgun: {
     id: "shotgun",
@@ -58,7 +58,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     magazine: 8,
     reloadTime: 2.2,
     coreMultiplier: 1.2,
-    price: { iron: 80, diamond: 4 },
+    price: { diamond: 50 },
   },
   rifle: {
     id: "rifle",
@@ -72,7 +72,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     magazine: 15,
     reloadTime: 2,
     coreMultiplier: 1.2,
-    price: { iron: 120, diamond: 6 },
+    price: { diamond: 65 },
   },
   sniper: {
     id: "sniper",
@@ -86,7 +86,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     magazine: 5,
     reloadTime: 2.8,
     coreMultiplier: 1.5,
-    price: { iron: 160, diamond: 10 },
+    price: { diamond: 100 },
   },
 };
 
@@ -97,7 +97,7 @@ export interface UpgradeDef {
   nome: string;
   descricao: string;
   maxLevel: number;
-  price: { iron: number; diamond: number };
+  price: { diamond: number };
 }
 
 export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
@@ -106,42 +106,42 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     nome: "VELOCIDADE",
     descricao: "+10% de velocidade por nível",
     maxLevel: 3,
-    price: { iron: 40, diamond: 1 },
+    price: { diamond: 20 },
   },
   armadura: {
     id: "armadura",
     nome: "ARMADURA",
     descricao: "-10% de dano recebido por nível",
     maxLevel: 3,
-    price: { iron: 60, diamond: 2 },
+    price: { diamond: 30 },
   },
   regeneracao: {
     id: "regeneracao",
     nome: "REGENERAÇÃO",
     descricao: "Regenera vida mais rápido",
     maxLevel: 2,
-    price: { iron: 50, diamond: 1 },
+    price: { diamond: 25 },
   },
   municao: {
     id: "municao",
     nome: "MUNIÇÃO",
     descricao: "+50% de capacidade do pente",
     maxLevel: 2,
-    price: { iron: 40, diamond: 1 },
+    price: { diamond: 20 },
   },
   recarga: {
     id: "recarga",
     nome: "RECARGA RÁPIDA",
     descricao: "-20% no tempo de recarga",
     maxLevel: 2,
-    price: { iron: 45, diamond: 1 },
+    price: { diamond: 20 },
   },
   nucleo: {
     id: "nucleo",
     nome: "DANO AO NÚCLEO",
     descricao: "+35% de dano contra núcleos",
     maxLevel: 2,
-    price: { iron: 70, diamond: 3 },
+    price: { diamond: 35 },
   },
 };
 
@@ -158,9 +158,9 @@ export const TUNING = {
   islandDistance: 62,
   centerRadius: 19,
   bridgeWidth: 5,
-  islandGenInterval: 4.5, // ferro
-  islandDiamondInterval: 16,
-  centerGenInterval: 3.5, // diamante no centro
+  islandDiamondInterval: 3.5,
+  centerGenInterval: 2.5,
+  diamondPerPickup: 5,
   pickupRadius: 2.2,
   maxPickupsPerNode: 8,
   gravity: 22,

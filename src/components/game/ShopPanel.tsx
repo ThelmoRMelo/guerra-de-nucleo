@@ -33,7 +33,6 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-black">COMERCIANTE</h2>
           <div className="flex items-center gap-3 text-sm font-bold">
-            <span className="text-iron">⛓ {hud.iron}</span>
             <span className="text-diamond">💎 {hud.diamond}</span>
             <button onClick={() => setShopOpen(false)} aria-label="Fechar loja">
               <X className="h-5 w-5" />
@@ -86,7 +85,7 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                           if (!engine.buyWeapon(p, id)) fail();
                         }}
                       >
-                        {w.price?.iron}⛓ {w.price?.diamond}💎
+                        {w.price?.diamond}💎
                       </button>
                     )}
                   </div>
@@ -115,7 +114,7 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                         if (!engine.buyUpgrade(p, id)) fail();
                       }}
                     >
-                      {max ? "MÁX" : `${cost.iron}⛓ ${cost.diamond}💎`}
+                      {max ? "MÁX" : `${cost.diamond}💎`}
                     </button>
                   </div>
                 );

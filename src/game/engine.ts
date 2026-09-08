@@ -39,7 +39,6 @@ export class GameEngine {
   status: MatchStatus = "running";
   difficulty: Difficulty = "normal";
   playerId = "p0";
-  private genTimers: number[] = [];
   private genDiamondTimers: number[] = [];
   private centerTimer = 0;
   onEvent?: (text: string) => void;
@@ -61,8 +60,7 @@ export class GameEngine {
       );
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
-    this.genTimers = ISLANDS.map(() => Math.random() * 2);
-    this.genDiamondTimers = ISLANDS.map(() => Math.random() * 6);
+    this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);
   }
 
   private makeParticipant(id: string, name: string, isBot: boolean, island: number): Participant {
@@ -85,7 +83,6 @@ export class GameEngine {
       weapon: "pistola",
       owned: ["pistola"],
       upgrades: emptyUpgrades(),
-      iron: 0,
       diamond: 0,
       ammo: WEAPONS.pistola.magazine,
       reloadUntil: 0,
@@ -372,11 +369,6 @@ export class GameEngine {
     for (let i = 0; i < ISLANDS.length; i++) {
       const owner = this.participants.find((p) => p.island === i);
       if (!owner || owner.eliminated) continue;
-      this.genTimers[i]! -= dt;
-      if (this.genTimers[i]! <= 0) {
-        this.genTimers[i] = TUNING.islandGenInterval;
-        this.spawnPickup("iron", ISLANDS[i]!.generator);
-      }
       this.genDiamondTimers[i]! -= dt;
       if (this.genDiamondTimers[i]! <= 0) {
         this.genDiamondTimers[i] = TUNING.islandDiamondInterval;
@@ -386,11 +378,11 @@ export class GameEngine {
     this.centerTimer -= dt;
     if (this.centerTimer <= 0) {
       this.centerTimer = TUNING.centerGenInterval;
-      this.spawnPickup(Math.random() < 0.75 ? "diamond" : "iron", CENTER_GEN, 6);
+      this.spawnPickup("diamond", CENTER_GEN, 6);
     }
   }
 
-  private spawnPickup(type: "iron" | "diamond", at: Vec3, spread = 2.6) {
+  private spawnPickup(type: "diamond", at: Vec3, spread = 2.6) {
     const near = this.pickups.filter((p) => dist2D(p.pos, at) < spread + 2);
     if (near.length >= TUNING.maxPickupsPerNode) return;
     const a = Math.random() * Math.PI * 2;
@@ -409,9 +401,8 @@ export class GameEngine {
       for (const p of this.participants) {
         if (!p.alive || p.eliminated) continue;
         if (dist2D(p.pos, pk.pos) < TUNING.pickupRadius) {
-          if (pk.type === "iron") p.iron += 1;
-          else p.diamond += 1;
-          if (p.id === this.playerId) this.onSound?.(pk.type === "iron" ? "iron" : "diamond");
+          p.diamond += TUNING.diamondPerPickup;
+          if (p.id === this.playerId) this.onSound?.("diamond");
           this.pickups.splice(i, 1);
           break;
         }
@@ -424,13 +415,12 @@ export class GameEngine {
   canBuyWeapon(p: Participant, id: WeaponId) {
     const w = WEAPONS[id];
     if (!w.price || p.owned.includes(id)) return false;
-    return p.iron >= w.price.iron && p.diamond >= w.price.diamond;
+    return p.diamond >= w.price.diamond;
   }
 
   buyWeapon(p: Participant, id: WeaponId): boolean {
     if (!this.canBuyWeapon(p, id)) return false;
     const price = WEAPONS[id].price!;
-    p.iron -= price.iron;
     p.diamond -= price.diamond;
     p.owned.push(id);
     p.weapon = id;
@@ -443,9 +433,8 @@ export class GameEngine {
     const u = UPGRADES[id];
     const level = p.upgrades[id];
     if (level >= u.maxLevel) return false;
-    const cost = { iron: u.price.iron * (level + 1), diamond: u.price.diamond * (level + 1) };
-    if (p.iron < cost.iron || p.diamond < cost.diamond) return false;
-    p.iron -= cost.iron;
+    const cost = { diamond: u.price.diamond * (level + 1) };
+    if (p.diamond < cost.diamond) return false;
     p.diamond -= cost.diamond;
     p.upgrades[id] = level + 1;
     if (p.id === this.playerId) this.onSound?.("buy");
@@ -455,7 +444,7 @@ export class GameEngine {
   upgradeCost(p: Participant, id: UpgradeId) {
     const u = UPGRADES[id];
     const level = p.upgrades[id];
-    return { iron: u.price.iron * (level + 1), diamond: u.price.diamond * (level + 1) };
+    return { diamond: u.price.diamond * (level + 1) };
   }
 
   equip(p: Participant, id: WeaponId) {

@@ -7,7 +7,6 @@ export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
 export interface HudSnapshot {
   hp: number;
   coreHp: number;
-  iron: number;
   diamond: number;
   weapon: WeaponId;
   owned: WeaponId[];

@@ -49,9 +49,6 @@ export function HUD({ engine }: { engine: GameEngine }) {
         </div>
         <div className="flex gap-2">
           <div className="flex items-center gap-1.5 rounded-lg bg-hud-panel/80 px-2.5 py-1 text-sm font-bold text-hud-text backdrop-blur">
-            <span className="text-iron">⛓</span> {hud.iron}
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-hud-panel/80 px-2.5 py-1 text-sm font-bold text-hud-text backdrop-blur">
             <Diamond className="h-4 w-4 text-diamond" /> {hud.diamond}
           </div>
         </div>
@@ -121,7 +118,7 @@ export function HUD({ engine }: { engine: GameEngine }) {
         <div className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-center">
           {hud.status === "victory" ? (
             <>
-              <Trophy className="mb-3 h-14 w-14 text-iron" />
+              <Trophy className="mb-3 h-14 w-14 text-diamond" />
               <h2 className="text-4xl font-black text-hud-text">🏆 VITÓRIA!</h2>
               <p className="mt-2 text-hud-text/85">Você foi o último sobrevivente.</p>
             </>

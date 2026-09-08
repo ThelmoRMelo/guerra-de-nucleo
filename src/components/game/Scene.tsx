@@ -149,7 +149,6 @@ export function Scene({ engine }: { engine: GameEngine }) {
       setHud({
         hp: Math.round(pl.hp),
         coreHp: Math.round(pl.coreHp),
-        iron: pl.iron,
         diamond: pl.diamond,
         weapon: pl.weapon,
         owned: [...pl.owned],
@@ -269,14 +268,10 @@ export function Scene({ engine }: { engine: GameEngine }) {
       <group ref={pickupGroup}>
         {pickups.map((pk) => (
           <mesh key={pk.id} position={[pk.pos.x, pk.pos.y, pk.pos.z]} castShadow>
-            {pk.type === "iron" ? (
-              <boxGeometry args={[0.45, 0.45, 0.45]} />
-            ) : (
-              <octahedronGeometry args={[0.38, 0]} />
-            )}
+            <octahedronGeometry args={[0.38, 0]} />
             <meshStandardMaterial
-              color={pk.type === "iron" ? "#c9d1dc" : "#59e7ff"}
-              emissive={pk.type === "iron" ? "#7d8794" : "#22b8d8"}
+              color="#59e7ff"
+              emissive="#22b8d8"
               emissiveIntensity={0.45}
               metalness={0.4}
               roughness={0.35}

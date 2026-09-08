@@ -37,7 +37,6 @@ export interface Participant {
   weapon: WeaponId;
   owned: WeaponId[];
   upgrades: Record<UpgradeId, number>;
-  iron: number;
   diamond: number;
   ammo: number;
   reloadUntil: number;
@@ -56,7 +55,7 @@ export interface Participant {
 
 export interface Pickup {
   id: number;
-  type: "iron" | "diamond";
+  type: "diamond";
   pos: Vec3;
   spin: number;
 }
