@@ -29,7 +29,7 @@ export const OBSTACLES: Obstacle[] = (() => {
     // base do núcleo (contornável, mas o núcleo continua atacável)
     list.push({ x: isl.core.x, z: isl.core.z, r: 2.0 });
     for (let i = 0; i < 3; i++) {
-      const a = isl.angle + Math.PI + (i - 1) * 0.8;
+      const a = isl.angle + Math.PI / 2 + (i - 1) * 0.55;
       const r = TUNING.islandRadius - 2.2;
       list.push({ x: isl.center.x + Math.cos(a) * r, z: isl.center.z + Math.sin(a) * r, r: 1.1 });
     }
