@@ -279,8 +279,10 @@ function decide(engine: GameEngine, b: Participant, brain: Brain, enemy: Partici
     b.botState = "COMPRAR";
     return;
   }
-  const needsResources = onlyPistol && b.diamond < 35;
-  if (needsResources || (pers !== "AGRESSIVO" && b.diamond < 20 && Math.random() < 0.6)) {
+  // Dois cristais já bastam para abandonar a ilha e pressionar uma base com a pistola.
+  // O bot volta à loja assim que acumular o necessário para uma arma melhor.
+  const needsResources = onlyPistol && b.diamond < 10;
+  if (needsResources || (pers !== "AGRESSIVO" && b.diamond < 10 && Math.random() < 0.35)) {
     b.botState = "COLETAR";
     return;
   }
