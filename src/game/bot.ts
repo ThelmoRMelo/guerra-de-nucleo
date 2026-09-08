@@ -482,10 +482,11 @@ function nearestEnemyAny(engine: GameEngine, b: Participant, range: number) {
   return best;
 }
 
-function nearestPickup(engine: GameEngine, b: Participant, range: number) {
+function nearestPickup(engine: GameEngine, b: Participant, range: number, preferCenter = false) {
   let best = null as (typeof engine.pickups)[number] | null;
-  let bd = range;
+  let bd = preferCenter ? 999 : range;
   for (const pk of engine.pickups) {
+    if (preferCenter && pk.type !== "diamond") continue;
     const d = dist2D(b.pos, pk.pos);
     if (d < bd) {
       bd = d;
@@ -494,6 +495,7 @@ function nearestPickup(engine: GameEngine, b: Participant, range: number) {
   }
   return best;
 }
+
 
 // ---------------------------------------------------------------- economia
 
