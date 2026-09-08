@@ -54,8 +54,8 @@ export function Menu() {
         {screen === "menu" && (
           <div className="text-center">
             <h1 className="text-5xl font-black leading-none tracking-tight text-foreground drop-shadow-lg sm:text-6xl">
-              NÚCLEO
-              <span className="block text-accent">DE FOGO</span>
+              GUERRA
+              <span className="block text-accent">DE NÚCLEO</span>
             </h1>
             <p className="mt-3 text-sm font-bold uppercase tracking-[0.25em] text-muted-foreground">
               Sobreviva. Evolua. Destrua.
