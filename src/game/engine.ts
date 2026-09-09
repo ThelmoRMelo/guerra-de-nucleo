@@ -23,6 +23,9 @@ export interface PlayerInput {
   moveZ: number; // -1..1 frente
   yaw: number; // direção da câmera
   pitch: number;
+  /** Direção calculada a partir do centro da câmera (campo de mira). */
+  aimYaw: number;
+  aimPitch: number;
   shooting: boolean;
   reload: boolean;
 }
@@ -163,7 +166,7 @@ export class GameEngine {
     this.moveEntity(p, dx, dz, dt);
 
     if (input.reload) this.startReload(p);
-    if (input.shooting) this.tryShoot(p, input.yaw, input.pitch);
+    if (input.shooting) this.tryShoot(p, input.aimYaw, input.aimPitch);
   }
 
   moveEntity(p: Participant, dx: number, dz: number, dt: number) {

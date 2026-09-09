@@ -29,6 +29,8 @@ export function Scene({ engine }: { engine: GameEngine }) {
   const pickTimer = useRef(0);
   const camPos = useMemo(() => new THREE.Vector3(), []);
   const lookAt = useMemo(() => new THREE.Vector3(), []);
+  const aimPoint = useMemo(() => new THREE.Vector3(), []);
+  const aimDirection = useMemo(() => new THREE.Vector3(), []);
 
   useEffect(() => {
     input.yaw = engine.player.yaw;
@@ -37,6 +39,24 @@ export function Scene({ engine }: { engine: GameEngine }) {
   useFrame((_, rawDelta) => {
     const dt = Math.min(rawDelta, 0.05);
     const blocked = shopOpen || paused || engine.status !== "running";
+    const aimPlayer = engine.player;
+    camPos.set(
+      aimPlayer.pos.x + Math.sin(input.yaw) * 7.5,
+      aimPlayer.pos.y + 3.4 - input.pitch * 4,
+      aimPlayer.pos.z + Math.cos(input.yaw) * 7.5,
+    );
+    lookAt.set(
+      aimPlayer.pos.x - Math.sin(input.yaw) * 6,
+      aimPlayer.pos.y + 1.6 + input.pitch * 7,
+      aimPlayer.pos.z - Math.cos(input.yaw) * 6,
+    );
+    aimDirection.subVectors(lookAt, camPos).normalize();
+    aimPoint.copy(camPos).addScaledVector(aimDirection, 160);
+    const aimDx = aimPoint.x - aimPlayer.pos.x;
+    const aimDz = aimPoint.z - aimPlayer.pos.z;
+    const aimDistance = Math.hypot(aimDx, aimDz);
+    const aimYaw = Math.atan2(-aimDx, -aimDz);
+    const aimPitch = Math.atan2(aimPoint.y - (aimPlayer.pos.y + 1.4), aimDistance);
 
     if (!blocked) {
       const reload = input.reloadPulse;
@@ -46,6 +66,8 @@ export function Scene({ engine }: { engine: GameEngine }) {
         moveZ: input.moveZ,
         yaw: input.yaw,
         pitch: input.pitch,
+        aimYaw,
+        aimPitch,
         shooting: input.shooting,
         reload,
       });
@@ -55,6 +77,8 @@ export function Scene({ engine }: { engine: GameEngine }) {
         moveZ: 0,
         yaw: input.yaw,
         pitch: input.pitch,
+        aimYaw,
+        aimPitch,
         shooting: false,
         reload: false,
       });
