@@ -508,7 +508,8 @@ export class GameEngine {
   }
 
   nearShop(p: Participant) {
-    return dist2D(p.pos, ISLANDS[p.island]!.shop) < 4.5;
+    // Comerciantes são neutros: qualquer participante pode comprar em qualquer ilha.
+    return ISLANDS.some((island) => dist2D(p.pos, island.shop) < 4.5);
   }
 }
 
