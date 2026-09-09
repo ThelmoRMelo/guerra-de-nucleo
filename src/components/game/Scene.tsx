@@ -89,6 +89,10 @@ export function Scene({ engine }: { engine: GameEngine }) {
       input.interactPulse = false;
       if (engine.nearShop(engine.player) && engine.player.alive) setShopOpen(!shopOpen);
     }
+    if (input.emotePulse) {
+      input.emotePulse = false;
+      if (engine.player.alive) useGame.getState().setEmoteOpen(true);
+    }
 
     // personagens
     engine.participants.forEach((p, i) => {
@@ -230,6 +234,24 @@ export function Scene({ engine }: { engine: GameEngine }) {
             <div className="whitespace-nowrap rounded-md bg-black/55 px-2 py-0.5 text-[13px] font-bold text-white">
               <span style={{ color: p.color }}>●</span> {p.name}{" "}
               <span className="opacity-80">{Math.round(p.hp)}</span>
+            </div>
+          </Html>
+        ) : null,
+      )}
+
+      {/* Emojis visíveis para todos os participantes durante quatro segundos. */}
+      {engine.participants.map((p) =>
+        p.alive && p.emote && p.emoteUntil > engine.time ? (
+          <Html
+            key={`e${p.id}`}
+            position={[p.pos.x, p.pos.y + 3.35, p.pos.z]}
+            center
+            distanceFactor={12}
+            zIndexRange={[11, 0]}
+            style={{ pointerEvents: "none" }}
+          >
+            <div className="animate-bounce rounded-full bg-white/90 px-2 py-1 text-2xl shadow-lg">
+              {p.emote}
             </div>
           </Html>
         ) : null,

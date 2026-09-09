@@ -48,6 +48,8 @@ export interface Participant {
   respawnAt: number;
   protectedUntil: number;
   kills: number;
+  emote: string | null;
+  emoteUntil: number;
   botState: BotState;
   botTargetId: string | null;
   botDecisionAt: number;

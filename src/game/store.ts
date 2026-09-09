@@ -39,6 +39,7 @@ interface GameStore {
   teamColor: string;
   roomCode: string;
   shopOpen: boolean;
+  emoteOpen: boolean;
   paused: boolean;
   sfxVolume: number;
   musicVolume: number;
@@ -55,6 +56,7 @@ interface GameStore {
   setTeamColor: (color: string) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
+  setEmoteOpen: (v: boolean) => void;
   setPaused: (v: boolean) => void;
   setSetting: <K extends keyof GameStore>(k: K, v: GameStore[K]) => void;
   setHud: (h: HudSnapshot) => void;
@@ -67,6 +69,7 @@ export const useGame = create<GameStore>((set) => ({
   teamColor: TEAM_COLORS[0]!,
   roomCode: "",
   shopOpen: false,
+  emoteOpen: false,
   paused: false,
   sfxVolume: 0.7,
   musicVolume: 0.4,
@@ -77,8 +80,8 @@ export const useGame = create<GameStore>((set) => ({
   engine: null,
   matchId: 0,
   startMatch: () =>
-    set((s) => ({ matchId: s.matchId + 1, screen: "match", hud: null, shopOpen: false, paused: false })),
-  exitToMenu: () => set({ screen: "menu", hud: null, shopOpen: false, paused: false }),
+    set((s) => ({ matchId: s.matchId + 1, screen: "match", hud: null, shopOpen: false, emoteOpen: false, paused: false })),
+  exitToMenu: () => set({ screen: "menu", hud: null, shopOpen: false, emoteOpen: false, paused: false }),
   setScreen: (screen) => set({ screen }),
   setName: (playerName) => {
     try {
@@ -91,6 +94,7 @@ export const useGame = create<GameStore>((set) => ({
   setTeamColor: (teamColor) => set({ teamColor }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),
+  setEmoteOpen: (emoteOpen) => set({ emoteOpen }),
   setPaused: (paused) => set({ paused }),
   setSetting: (k, v) => set({ [k]: v } as never),
   setHud: (hud) => set({ hud }),

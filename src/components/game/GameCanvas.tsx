@@ -5,6 +5,7 @@ import { Scene } from "./Scene";
 import { HUD } from "./HUD";
 import { TouchControls } from "./TouchControls";
 import { ShopPanel } from "./ShopPanel";
+import { EmotePanel } from "./EmotePanel";
 import { GameEngine } from "@/game/engine";
 import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
 import { playSound, setSfxVolume } from "@/game/audio";
@@ -18,10 +19,12 @@ export function GameCanvas() {
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
   const shopOpen = useGame((s) => s.shopOpen);
+  const emoteOpen = useGame((s) => s.emoteOpen);
   const paused = useGame((s) => s.paused);
   const setEngine = useGame((s) => s.setEngine);
   const setPaused = useGame((s) => s.setPaused);
   const setShopOpen = useGame((s) => s.setShopOpen);
+  const setEmoteOpen = useGame((s) => s.setEmoteOpen);
 
 
   const engine = useMemo(() => {
@@ -34,10 +37,11 @@ export function GameCanvas() {
   useEffect(() => {
     setEngine(engine);
     setShopOpen(false);
+    setEmoteOpen(false);
     setPaused(false);
     resetInput();
     return () => setEngine(null);
-  }, [engine, setEngine, setPaused, setShopOpen]);
+  }, [engine, setEmoteOpen, setEngine, setPaused, setShopOpen]);
 
   useEffect(() => setSfxVolume(sfxVolume), [sfxVolume]);
   useEffect(() => {
@@ -46,8 +50,8 @@ export function GameCanvas() {
 
   // MERCHANT MODE: com a loja (ou pausa) aberta o mouse pertence só à interface
   useEffect(() => {
-    setUiMode(shopOpen || paused);
-  }, [shopOpen, paused]);
+    setUiMode(shopOpen || paused || emoteOpen);
+  }, [shopOpen, paused, emoteOpen]);
 
   useEffect(() => {
     const el = wrapper.current;
@@ -99,6 +103,7 @@ export function GameCanvas() {
       <HUD engine={engine} />
       <TouchControls />
       <ShopPanel engine={engine} />
+      <EmotePanel engine={engine} />
     </div>
   );
 }

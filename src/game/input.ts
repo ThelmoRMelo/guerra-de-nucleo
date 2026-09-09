@@ -8,6 +8,7 @@ export const input = {
   shooting: false,
   reloadPulse: false,
   interactPulse: false,
+  emotePulse: false,
   sensitivity: 1,
   touch: false,
   // true = o mouse/teclado pertencem à interface (loja), não ao jogo 3D
@@ -73,6 +74,10 @@ export function attachDesktopInput(target: HTMLElement, onEscape: () => void) {
       return;
     }
     if (input.uiMode) return;
+    if (e.code === "KeyQ") {
+      input.emotePulse = true;
+      return;
+    }
     if (e.code === "KeyR") input.reloadPulse = true;
     keys.add(e.code);
     axisFromKeys();
@@ -129,4 +134,5 @@ export function resetInput() {
   input.reloadPulse = false;
 
   input.interactPulse = false;
+  input.emotePulse = false;
 }

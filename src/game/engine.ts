@@ -106,6 +106,8 @@ export class GameEngine {
       respawnAt: 0,
       protectedUntil: TUNING.spawnProtection,
       kills: 0,
+      emote: null,
+      emoteUntil: 0,
       botState: "COLETAR",
       botTargetId: null,
       botDecisionAt: 0,
@@ -120,6 +122,13 @@ export class GameEngine {
     this.events.push({ id: nextId(), text, born: this.time });
     if (this.events.length > 6) this.events.shift();
     this.onEvent?.(text);
+  }
+
+  /** Mostra uma reação para todos os participantes por quatro segundos. */
+  sendEmote(p: Participant, emote: string) {
+    if (!p.alive || p.eliminated) return;
+    p.emote = emote;
+    p.emoteUntil = this.time + 4;
   }
 
   // ---------------------------------------------------------------- loop
@@ -196,6 +205,7 @@ export class GameEngine {
   }
 
   private updateCommon(dt: number, p: Participant) {
+    if (p.emote && p.emoteUntil <= this.time) p.emote = null;
     if (p.eliminated) return;
     if (!p.alive) {
       if (this.time >= p.respawnAt) this.respawn(p);
