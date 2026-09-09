@@ -14,6 +14,8 @@ export function Menu() {
   const setName = useGame((s) => s.setName);
   const teamColor = useGame((s) => s.teamColor);
   const setTeamColor = useGame((s) => s.setTeamColor);
+  const botDifficulty = useGame((s) => s.botDifficulty);
+  const setBotDifficulty = useGame((s) => s.setBotDifficulty);
   const roomCode = useGame((s) => s.roomCode);
   const setRoomCode = useGame((s) => s.setRoomCode);
   const startMatch = useGame((s) => s.startMatch);
@@ -89,6 +91,36 @@ export function Menu() {
               </div>
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Se um bot já usa esta cor, ele recebe a sua cor anterior.
+              </p>
+            </div>
+            <div className="mt-3 rounded-xl bg-card/70 p-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Dificuldade dos bots
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ["facil", "FÁCIL"],
+                    ["normal", "NORMAL"],
+                    ["dificil", "DIFÍCIL"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setBotDifficulty(value)}
+                    className={`rounded-lg px-2 py-2 text-xs font-black ${
+                      botDifficulty === value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Define a reação, mira, alcance de visão e decisões dos bots nesta partida.
               </p>
             </div>
 

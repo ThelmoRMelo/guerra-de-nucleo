@@ -4,6 +4,7 @@ import type { UpgradeId, WeaponId } from "./config";
 import { TEAM_COLORS } from "./config";
 
 export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
+export type BotDifficulty = "facil" | "normal" | "dificil";
 
 export interface HudSnapshot {
   hp: number;
@@ -37,6 +38,7 @@ interface GameStore {
   screen: Screen;
   playerName: string;
   teamColor: string;
+  botDifficulty: BotDifficulty;
   roomCode: string;
   shopOpen: boolean;
   emoteOpen: boolean;
@@ -54,6 +56,7 @@ interface GameStore {
   setScreen: (s: Screen) => void;
   setName: (n: string) => void;
   setTeamColor: (color: string) => void;
+  setBotDifficulty: (difficulty: BotDifficulty) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
   setEmoteOpen: (v: boolean) => void;
@@ -67,6 +70,7 @@ export const useGame = create<GameStore>((set) => ({
   screen: "menu",
   playerName: "Player" + Math.floor(100 + Math.random() * 900),
   teamColor: TEAM_COLORS[0]!,
+  botDifficulty: "normal",
   roomCode: "",
   shopOpen: false,
   emoteOpen: false,
@@ -92,6 +96,7 @@ export const useGame = create<GameStore>((set) => ({
     set({ playerName });
   },
   setTeamColor: (teamColor) => set({ teamColor }),
+  setBotDifficulty: (botDifficulty) => set({ botDifficulty }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),
   setEmoteOpen: (emoteOpen) => set({ emoteOpen }),

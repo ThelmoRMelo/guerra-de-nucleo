@@ -15,6 +15,7 @@ export function GameCanvas() {
   const wrapper = useRef<HTMLDivElement>(null);
   const playerName = useGame((s) => s.playerName);
   const teamColor = useGame((s) => s.teamColor);
+  const botDifficulty = useGame((s) => s.botDifficulty);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
@@ -28,7 +29,7 @@ export function GameCanvas() {
 
 
   const engine = useMemo(() => {
-    const e = new GameEngine(playerName, [], teamColor);
+    const e = new GameEngine(playerName, [], teamColor, botDifficulty);
     e.onSound = playSound;
     return e;
     // eslint-disable-next-line react-hooks/exhaustive-deps
