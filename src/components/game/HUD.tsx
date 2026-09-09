@@ -120,7 +120,9 @@ export function HUD({ engine }: { engine: GameEngine }) {
             <>
               <Trophy className="mb-3 h-14 w-14 text-diamond" />
               <h2 className="text-4xl font-black text-hud-text">🏆 VITÓRIA!</h2>
-              <p className="mt-2 text-hud-text/85">Você foi o último sobrevivente.</p>
+              <p className="mt-2 text-lg font-bold text-hud-text/85">
+                Sua equipe foi a última a ficar em pé.
+              </p>
             </>
           ) : (
             <>
