@@ -279,10 +279,10 @@ function decide(engine: GameEngine, b: Participant, brain: Brain, enemy: Partici
     b.botState = "COMPRAR";
     return;
   }
-  // Dois cristais já bastam para abandonar a ilha e pressionar uma base com a pistola.
-  // O bot volta à loja assim que acumular o necessário para uma arma melhor.
-  const needsResources = onlyPistol && b.diamond < 10;
-  if (needsResources || (pers !== "AGRESSIVO" && b.diamond < 10 && Math.random() < 0.35)) {
+  // Um cristal é suficiente: depois disso o bot deixa a ilha e ataca com a pistola.
+  // Ele só volta à loja quando já tiver diamantes para melhorar o equipamento.
+  const needsResources = onlyPistol && b.diamond < 5;
+  if (needsResources || (pers !== "AGRESSIVO" && b.diamond < 5 && Math.random() < 0.15)) {
     b.botState = "COLETAR";
     return;
   }
