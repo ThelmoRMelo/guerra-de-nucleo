@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { GameEngine } from "./engine";
 import type { UpgradeId, WeaponId } from "./config";
+import { TEAM_COLORS } from "./config";
 
 export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
 
@@ -35,6 +36,7 @@ export interface HudSnapshot {
 interface GameStore {
   screen: Screen;
   playerName: string;
+  teamColor: string;
   roomCode: string;
   shopOpen: boolean;
   paused: boolean;
@@ -50,6 +52,7 @@ interface GameStore {
   exitToMenu: () => void;
   setScreen: (s: Screen) => void;
   setName: (n: string) => void;
+  setTeamColor: (color: string) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
   setPaused: (v: boolean) => void;
@@ -61,6 +64,7 @@ interface GameStore {
 export const useGame = create<GameStore>((set) => ({
   screen: "menu",
   playerName: "Player" + Math.floor(100 + Math.random() * 900),
+  teamColor: TEAM_COLORS[0]!,
   roomCode: "",
   shopOpen: false,
   paused: false,
@@ -84,6 +88,7 @@ export const useGame = create<GameStore>((set) => ({
     }
     set({ playerName });
   },
+  setTeamColor: (teamColor) => set({ teamColor }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),
   setPaused: (paused) => set({ paused }),

@@ -44,7 +44,7 @@ export class GameEngine {
   onEvent?: (text: string) => void;
   onSound?: (name: string) => void;
 
-  constructor(playerName: string, humanNames: string[] = []) {
+  constructor(playerName: string, humanNames: string[] = [], playerColor = TEAM_COLORS[0]!) {
     const names = [playerName, ...humanNames];
     const order = [0, 1, 2, 3, 4, 5, 6, 7];
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
@@ -58,6 +58,15 @@ export class GameEngine {
           order[i]!,
         ),
       );
+    }
+    // A cor escolhida pelo jogador é única: quem já a usava recebe a cor anterior dele.
+    const player = this.player;
+    const chosenColor = TEAM_COLORS.includes(playerColor) ? playerColor : player.color;
+    const occupant = this.participants.find((p) => p.id !== player.id && p.color === chosenColor);
+    if (occupant) {
+      const previousColor = player.color;
+      player.color = chosenColor;
+      occupant.color = previousColor;
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);

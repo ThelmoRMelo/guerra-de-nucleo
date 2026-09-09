@@ -12,6 +12,8 @@ export function Menu() {
   const setScreen = useGame((s) => s.setScreen);
   const playerName = useGame((s) => s.playerName);
   const setName = useGame((s) => s.setName);
+  const teamColor = useGame((s) => s.teamColor);
+  const setTeamColor = useGame((s) => s.setTeamColor);
   const roomCode = useGame((s) => s.roomCode);
   const setRoomCode = useGame((s) => s.setRoomCode);
   const startMatch = useGame((s) => s.startMatch);
@@ -63,6 +65,32 @@ export function Menu() {
             <p className="mt-6 rounded-xl bg-card/70 px-4 py-2 text-sm">
               Jogando como <span className="font-black text-accent">{playerName}</span>
             </p>
+            <div className="mt-4 rounded-xl bg-card/70 p-3 text-left">
+              <p className="text-center text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Cor da equipe
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {TEAM_COLORS.map((color, i) => {
+                  const selected = color === teamColor;
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`Escolher cor ${i + 1}`}
+                      aria-pressed={selected}
+                      onClick={() => setTeamColor(color)}
+                      className={`h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 ${
+                        selected ? "scale-110 border-white ring-2 ring-accent" : "border-black/30"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Se um bot já usa esta cor, ele recebe a sua cor anterior.
+              </p>
+            </div>
 
             <div className="mt-6 space-y-3">
               <button className="btn-arcade w-full text-lg" onClick={startMatch}>
@@ -115,7 +143,7 @@ export function Menu() {
                   className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2 text-sm"
                 >
                   <span className="flex items-center gap-2 font-bold">
-                    <span style={{ color: TEAM_COLORS[i] }}>●</span>
+                    <span style={{ color: lobbyColor(i, teamColor) }}>●</span>
                     {i === 0 ? playerName : BOT_NAMES[i % BOT_NAMES.length]}
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -274,6 +302,11 @@ export function Menu() {
       )}
     </div>
   );
+}
+
+function lobbyColor(index: number, selectedColor: string) {
+  if (index === 0) return selectedColor;
+  return TEAM_COLORS[index] === selectedColor ? TEAM_COLORS[0]! : TEAM_COLORS[index]!;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

@@ -13,6 +13,7 @@ import { useGame } from "@/game/store";
 export function GameCanvas() {
   const wrapper = useRef<HTMLDivElement>(null);
   const playerName = useGame((s) => s.playerName);
+  const teamColor = useGame((s) => s.teamColor);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
@@ -24,7 +25,7 @@ export function GameCanvas() {
 
 
   const engine = useMemo(() => {
-    const e = new GameEngine(playerName);
+    const e = new GameEngine(playerName, [], teamColor);
     e.onSound = playSound;
     return e;
     // eslint-disable-next-line react-hooks/exhaustive-deps
