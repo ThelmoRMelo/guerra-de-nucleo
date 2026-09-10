@@ -18,6 +18,8 @@ export function Menu() {
   const setBotDifficulty = useGame((s) => s.setBotDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
   const setCoreRestorationEnabled = useGame((s) => s.setCoreRestorationEnabled);
+  const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
+  const setFillEmptySlotsWithBots = useGame((s) => s.setFillEmptySlotsWithBots);
   const isRoomHost = useGame((s) => s.isRoomHost);
   const setIsRoomHost = useGame((s) => s.setIsRoomHost);
   const roomCode = useGame((s) => s.roomCode);
@@ -206,8 +208,41 @@ export function Menu() {
               )}
             </div>
 
+            <div className="mt-3 rounded-xl bg-muted/60 p-3">
+              <p className="text-sm font-black">PREENCHER VAGAS COM BOTS</p>
+              {isRoomHost ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    ON completa as vagas restantes com bots. OFF deixa apenas os jogadores humanos da sala.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      className={`rounded-lg px-3 py-2 text-xs font-black ${
+                        fillEmptySlotsWithBots ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+                      }`}
+                      onClick={() => setFillEmptySlotsWithBots(true)}
+                    >
+                      ON
+                    </button>
+                    <button
+                      className={`rounded-lg px-3 py-2 text-xs font-black ${
+                        !fillEmptySlotsWithBots ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+                      }`}
+                      onClick={() => setFillEmptySlotsWithBots(false)}
+                    >
+                      OFF
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Regra definida pelo anfitrião: {fillEmptySlotsWithBots ? "ON" : "OFF"}
+                </p>
+              )}
+            </div>
+
             <ul className="mt-4 space-y-1.5">
-              {Array.from({ length: 8 }, (_, i) => (
+              {Array.from({ length: fillEmptySlotsWithBots ? 8 : 1 }, (_, i) => (
                 <li
                   key={i}
                   className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2 text-sm"

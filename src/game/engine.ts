@@ -55,13 +55,15 @@ export class GameEngine {
     playerColor = TEAM_COLORS[0]!,
     difficulty: Difficulty = "normal",
     coreRestorationEnabled = true,
+    fillEmptySlotsWithBots = true,
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
     const names = [playerName, ...humanNames];
     const order = [0, 1, 2, 3, 4, 5, 6, 7];
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < 8; i++) {
+    const participantCount = fillEmptySlotsWithBots ? 8 : names.length;
+    for (let i = 0; i < participantCount; i++) {
       const human = i < names.length;
       this.participants.push(
         this.makeParticipant(

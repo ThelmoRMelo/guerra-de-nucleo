@@ -40,6 +40,7 @@ interface GameStore {
   teamColor: string;
   botDifficulty: BotDifficulty;
   coreRestorationEnabled: boolean;
+  fillEmptySlotsWithBots: boolean;
   isRoomHost: boolean;
   roomCode: string;
   shopOpen: boolean;
@@ -60,6 +61,7 @@ interface GameStore {
   setTeamColor: (color: string) => void;
   setBotDifficulty: (difficulty: BotDifficulty) => void;
   setCoreRestorationEnabled: (enabled: boolean) => void;
+  setFillEmptySlotsWithBots: (enabled: boolean) => void;
   setIsRoomHost: (isHost: boolean) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
@@ -76,6 +78,7 @@ export const useGame = create<GameStore>((set) => ({
   teamColor: TEAM_COLORS[0]!,
   botDifficulty: "normal",
   coreRestorationEnabled: true,
+  fillEmptySlotsWithBots: true,
   isRoomHost: true,
   roomCode: "",
   shopOpen: false,
@@ -104,6 +107,7 @@ export const useGame = create<GameStore>((set) => ({
   setTeamColor: (teamColor) => set({ teamColor }),
   setBotDifficulty: (botDifficulty) => set({ botDifficulty }),
   setCoreRestorationEnabled: (coreRestorationEnabled) => set({ coreRestorationEnabled }),
+  setFillEmptySlotsWithBots: (fillEmptySlotsWithBots) => set({ fillEmptySlotsWithBots }),
   setIsRoomHost: (isRoomHost) => set({ isRoomHost }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),

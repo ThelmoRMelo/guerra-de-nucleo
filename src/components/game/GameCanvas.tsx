@@ -17,6 +17,7 @@ export function GameCanvas() {
   const teamColor = useGame((s) => s.teamColor);
   const botDifficulty = useGame((s) => s.botDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
+  const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
@@ -30,7 +31,14 @@ export function GameCanvas() {
 
 
   const engine = useMemo(() => {
-    const e = new GameEngine(playerName, [], teamColor, botDifficulty, coreRestorationEnabled);
+    const e = new GameEngine(
+      playerName,
+      [],
+      teamColor,
+      botDifficulty,
+      coreRestorationEnabled,
+      fillEmptySlotsWithBots,
+    );
     e.onSound = playSound;
     return e;
     // eslint-disable-next-line react-hooks/exhaustive-deps
