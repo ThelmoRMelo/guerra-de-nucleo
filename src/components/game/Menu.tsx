@@ -16,6 +16,10 @@ export function Menu() {
   const setTeamColor = useGame((s) => s.setTeamColor);
   const botDifficulty = useGame((s) => s.botDifficulty);
   const setBotDifficulty = useGame((s) => s.setBotDifficulty);
+  const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
+  const setCoreRestorationEnabled = useGame((s) => s.setCoreRestorationEnabled);
+  const isRoomHost = useGame((s) => s.isRoomHost);
+  const setIsRoomHost = useGame((s) => s.setIsRoomHost);
   const roomCode = useGame((s) => s.roomCode);
   const setRoomCode = useGame((s) => s.setRoomCode);
   const startMatch = useGame((s) => s.startMatch);
@@ -46,6 +50,7 @@ export function Menu() {
 
   const openLobby = () => {
     setRoomCode(randomCode());
+    setIsRoomHost(true);
     setScreen("lobby");
   };
 
@@ -167,6 +172,39 @@ export function Menu() {
               Compartilhe este código com seus amigos. Enquanto o jogo online não estiver ligado, as
               vagas são preenchidas por bots.
             </p>
+
+            <div className="mt-4 rounded-xl bg-muted/60 p-3">
+              <p className="text-sm font-black">RESTAURAÇÃO DE NÚCLEO</p>
+              {isRoomHost ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Você define se jogadores humanos podem restaurar o núcleo até duas vezes em qualquer comerciante.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      className={`rounded-lg px-3 py-2 text-xs font-black ${
+                        coreRestorationEnabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+                      }`}
+                      onClick={() => setCoreRestorationEnabled(true)}
+                    >
+                      ON
+                    </button>
+                    <button
+                      className={`rounded-lg px-3 py-2 text-xs font-black ${
+                        !coreRestorationEnabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+                      }`}
+                      onClick={() => setCoreRestorationEnabled(false)}
+                    >
+                      OFF
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Regra definida pelo anfitrião: {coreRestorationEnabled ? "ON" : "OFF"}
+                </p>
+              )}
+            </div>
 
             <ul className="mt-4 space-y-1.5">
               {Array.from({ length: 8 }, (_, i) => (
@@ -319,6 +357,7 @@ export function Menu() {
                 else {
                   setJoinError("");
                   setRoomCode(joinCode);
+                  setIsRoomHost(false);
                   setJoinOpen(false);
                   setScreen("lobby");
                 }

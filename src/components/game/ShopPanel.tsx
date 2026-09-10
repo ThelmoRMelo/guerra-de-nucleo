@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { UPGRADES, WEAPONS, type UpgradeId, type WeaponId } from "@/game/config";
+import { TUNING, UPGRADES, WEAPONS, type UpgradeId, type WeaponId } from "@/game/config";
 import { useGame } from "@/game/store";
 import type { GameEngine } from "@/game/engine";
 
@@ -119,6 +119,25 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                   </div>
                 );
               })}
+          {tab === "melhorias" && engine.coreRestorationEnabled && !p.isBot && hud.coreHp <= 0 && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/50 bg-accent/10 p-3">
+              <div>
+                <p className="font-bold">RESTAURAR NÚCLEO</p>
+                <p className="text-xs text-muted-foreground">
+                  Recupera toda a vida do núcleo · {p.coreRestorations}/{TUNING.maxCoreRestorations} restaurações usadas
+                </p>
+              </div>
+              <button
+                className="btn-arcade-sm"
+                disabled={p.coreRestorations >= TUNING.maxCoreRestorations}
+                onClick={() => {
+                  if (!engine.restoreCore(p)) fail();
+                }}
+              >
+                {p.coreRestorations >= TUNING.maxCoreRestorations ? "LIMITE" : `${TUNING.coreRestorePrice}💎`}
+              </button>
+            </div>
+          )}
         </div>
 
         {msg && <p className="mt-3 text-center text-sm font-bold text-destructive">{msg}</p>}

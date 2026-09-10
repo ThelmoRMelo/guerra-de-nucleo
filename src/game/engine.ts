@@ -41,6 +41,8 @@ export class GameEngine {
   events: GameEvent[] = [];
   status: MatchStatus = "running";
   difficulty: Difficulty = "normal";
+  /** Regra de sala definida pelo anfitrião: humanos podem restaurar seus núcleos. */
+  coreRestorationEnabled = true;
   playerId = "p0";
   private genDiamondTimers: number[] = [];
   private centerTimer = 0;
@@ -52,8 +54,10 @@ export class GameEngine {
     humanNames: string[] = [],
     playerColor = TEAM_COLORS[0]!,
     difficulty: Difficulty = "normal",
+    coreRestorationEnabled = true,
   ) {
     this.difficulty = difficulty;
+    this.coreRestorationEnabled = coreRestorationEnabled;
     const names = [playerName, ...humanNames];
     const order = [0, 1, 2, 3, 4, 5, 6, 7];
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
@@ -93,6 +97,7 @@ export class GameEngine {
       alive: true,
       eliminated: false,
       coreHp: TUNING.coreMaxHp,
+      coreRestorations: 0,
       pos: { ...isl.spawn },
       vel: { x: 0, y: 0, z: 0 },
       yaw: Math.atan2(Math.cos(isl.angle), Math.sin(isl.angle)),
@@ -511,6 +516,28 @@ export class GameEngine {
   nearShop(p: Participant) {
     // Comerciantes são neutros: qualquer participante pode comprar em qualquer ilha.
     return ISLANDS.some((island) => dist2D(p.pos, island.shop) < 4.5);
+  }
+
+  canRestoreCore(p: Participant) {
+    return (
+      this.coreRestorationEnabled &&
+      !p.isBot &&
+      p.alive &&
+      !p.eliminated &&
+      p.coreHp <= 0 &&
+      p.coreRestorations < TUNING.maxCoreRestorations &&
+      p.diamond >= TUNING.coreRestorePrice
+    );
+  }
+
+  restoreCore(p: Participant): boolean {
+    if (!this.canRestoreCore(p)) return false;
+    p.diamond -= TUNING.coreRestorePrice;
+    p.coreHp = TUNING.coreMaxHp;
+    p.coreRestorations += 1;
+    this.pushEvent(`✨ ${p.name} RESTAUROU O NÚCLEO!`);
+    if (p.id === this.playerId) this.onSound?.("buy");
+    return true;
   }
 }
 

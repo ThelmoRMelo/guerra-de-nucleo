@@ -29,6 +29,7 @@ export interface Participant {
   alive: boolean;
   eliminated: boolean;
   coreHp: number;
+  coreRestorations: number;
   pos: Vec3;
   vel: Vec3;
   yaw: number;

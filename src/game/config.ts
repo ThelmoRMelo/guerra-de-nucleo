@@ -161,6 +161,8 @@ export const TUNING = {
   islandDiamondInterval: 3.5,
   centerGenInterval: 2.5,
   diamondPerPickup: 5,
+  coreRestorePrice: 150,
+  maxCoreRestorations: 2,
   pickupRadius: 2.2,
   maxPickupsPerNode: 8,
   gravity: 22,
