@@ -1,0 +1,67 @@
+/**
+ * Global base styles for Núcleo de Fogo.
+ *
+ * Imported at the application root so every route inherits these resets.
+ * Tailwind directives, theme tokens and component utilities live in
+ * src/styles.css and are intentionally kept there to avoid duplication.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-display), ui-rounded, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
