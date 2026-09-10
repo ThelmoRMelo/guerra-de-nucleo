@@ -71,6 +71,25 @@ export function ensureBrain(b: Participant, index: number): Brain {
   return b.brain;
 }
 
+/** Limpa somente o estado transitório de navegação após respawn; preserva o progresso do bot. */
+export function resetBotAfterRespawn(b: Participant, time: number) {
+  const brain = ensureBrain(b, b.island);
+  brain.path = [];
+  brain.pathIdx = 0;
+  brain.goalKey = "";
+  brain.targetIsland = -1;
+  brain.repathAt = 0;
+  brain.stuckTimer = 0;
+  brain.stuckCount = 0;
+  brain.lastX = b.pos.x;
+  brain.lastZ = b.pos.z;
+  brain.detourUntil = 0;
+  b.botTargetId = null;
+  b.botState = "REPOSICIONAR";
+  // Força uma nova decisão no próximo frame, em vez de aguardar o intervalo antigo.
+  b.botDecisionAt = time;
+}
+
 // ---------------------------------------------------------------- update
 
 export function updateBot(engine: GameEngine, b: Participant, dt: number) {

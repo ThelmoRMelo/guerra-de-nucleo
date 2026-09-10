@@ -9,7 +9,7 @@ import {
 } from "./config";
 import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
-import { ensureBrain, updateBot, type Difficulty } from "./bot";
+import { ensureBrain, resetBotAfterRespawn, updateBot, type Difficulty } from "./bot";
 
 let uid = 1;
 const nextId = () => uid++;
@@ -388,6 +388,7 @@ export class GameEngine {
     p.ammo = this.magazineOf(p);
     p.reloadUntil = 0;
     p.burstLeft = 0;
+    if (p.isBot) resetBotAfterRespawn(p, this.time);
     if (p.id === this.playerId) this.onSound?.("respawn");
   }
 
