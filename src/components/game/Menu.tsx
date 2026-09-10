@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BOT_NAMES, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
 
@@ -6,6 +6,12 @@ function randomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
+
+type RoomSettings = {
+  coreRestorationEnabled: boolean;
+  fillEmptySlotsWithBots: boolean;
+  botDifficulty: "facil" | "normal" | "dificil";
+};
 
 export function Menu() {
   const screen = useGame((s) => s.screen);
@@ -39,6 +45,7 @@ export function Menu() {
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [copied, setCopied] = useState(false);
+  const roomChannel = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
     try {
@@ -50,10 +57,42 @@ export function Menu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sincronização do lobby entre abas/janelas da mesma origem. O visitante não
+  // inicia localmente: ele recebe a ordem e as regras definidas pelo anfitrião.
+  useEffect(() => {
+    if (!roomCode || typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel(`guerra-de-nucleo:${roomCode}`);
+    roomChannel.current = channel;
+    channel.onmessage = (event: MessageEvent<{ type?: string; settings?: RoomSettings }>) => {
+      if (event.data.type !== "START_MATCH" || useGame.getState().isRoomHost) return;
+      if (event.data.settings) {
+        useGame.setState({
+          coreRestorationEnabled: event.data.settings.coreRestorationEnabled,
+          fillEmptySlotsWithBots: event.data.settings.fillEmptySlotsWithBots,
+          botDifficulty: event.data.settings.botDifficulty,
+        });
+      }
+      useGame.getState().startMatch();
+    };
+    return () => {
+      if (roomChannel.current === channel) roomChannel.current = null;
+      channel.close();
+    };
+  }, [roomCode]);
+
   const openLobby = () => {
     setRoomCode(randomCode());
     setIsRoomHost(true);
     setScreen("lobby");
+  };
+
+  const startRoomMatch = () => {
+    if (!isRoomHost) return;
+    roomChannel.current?.postMessage({
+      type: "START_MATCH",
+      settings: { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty },
+    });
+    startMatch();
   };
 
   return (
@@ -174,8 +213,7 @@ export function Menu() {
               </button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Compartilhe este código com seus amigos. Enquanto o jogo online não estiver ligado, as
-              vagas são preenchidas por bots.
+              O anfitrião controla o início da partida e as regras da sala.
             </p>
 
             <div className="mt-4 rounded-xl bg-muted/60 p-3">
@@ -261,9 +299,15 @@ export function Menu() {
               ))}
             </ul>
 
-            <button className="btn-arcade mt-5 w-full" onClick={startMatch}>
-              INICIAR PARTIDA
-            </button>
+            {isRoomHost ? (
+              <button className="btn-arcade mt-5 w-full" onClick={startRoomMatch}>
+                INICIAR PARTIDA
+              </button>
+            ) : (
+              <button className="btn-arcade mt-5 w-full opacity-60" disabled>
+                AGUARDANDO O ANFITRIÃO…
+              </button>
+            )}
             <button className="btn-arcade-ghost mt-2 w-full" onClick={() => setScreen("menu")}>
               VOLTAR
             </button>
