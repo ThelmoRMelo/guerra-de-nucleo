@@ -13,6 +13,30 @@ type RoomSettings = {
   botDifficulty: "facil" | "normal" | "dificil";
 };
 
+type LocalRoomState = {
+  status: "lobby" | "started";
+  settings: RoomSettings;
+};
+
+const roomStorageKey = (code: string) => `guerra-de-nucleo:room:${code}`;
+
+function readLocalRoom(code: string): LocalRoomState | null {
+  try {
+    const raw = localStorage.getItem(roomStorageKey(code));
+    return raw ? (JSON.parse(raw) as LocalRoomState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocalRoom(code: string, state: LocalRoomState) {
+  try {
+    localStorage.setItem(roomStorageKey(code), JSON.stringify(state));
+  } catch {
+    /* armazenamento local indisponível */
+  }
+}
+
 export function Menu() {
   const screen = useGame((s) => s.screen);
   const setScreen = useGame((s) => s.setScreen);
@@ -63,35 +87,53 @@ export function Menu() {
     if (!roomCode || typeof BroadcastChannel === "undefined") return;
     const channel = new BroadcastChannel(`guerra-de-nucleo:${roomCode}`);
     roomChannel.current = channel;
-    channel.onmessage = (event: MessageEvent<{ type?: string; settings?: RoomSettings }>) => {
-      if (event.data.type !== "START_MATCH" || useGame.getState().isRoomHost) return;
-      if (event.data.settings) {
-        useGame.setState({
-          coreRestorationEnabled: event.data.settings.coreRestorationEnabled,
-          fillEmptySlotsWithBots: event.data.settings.fillEmptySlotsWithBots,
-          botDifficulty: event.data.settings.botDifficulty,
-        });
-      }
+    const startAsGuest = (settings: RoomSettings) => {
+      if (useGame.getState().isRoomHost) return;
+      useGame.setState({
+        coreRestorationEnabled: settings.coreRestorationEnabled,
+        fillEmptySlotsWithBots: settings.fillEmptySlotsWithBots,
+        botDifficulty: settings.botDifficulty,
+      });
       useGame.getState().startMatch();
     };
+    channel.onmessage = (event: MessageEvent<{ type?: string; settings?: RoomSettings }>) => {
+      if (event.data.type === "START_MATCH" && event.data.settings) startAsGuest(event.data.settings);
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== roomStorageKey(roomCode) || !event.newValue) return;
+      try {
+        const room = JSON.parse(event.newValue) as LocalRoomState;
+        if (room.status === "started") startAsGuest(room.settings);
+      } catch {
+        /* estado inválido é ignorado */
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    const room = readLocalRoom(roomCode);
+    if (!isRoomHost && room?.status === "started") startAsGuest(room.settings);
     return () => {
       if (roomChannel.current === channel) roomChannel.current = null;
       channel.close();
+      window.removeEventListener("storage", onStorage);
     };
-  }, [roomCode]);
+  }, [roomCode, isRoomHost]);
 
   const openLobby = () => {
-    setRoomCode(randomCode());
+    const code = randomCode();
+    saveLocalRoom(code, {
+      status: "lobby",
+      settings: { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty },
+    });
+    setRoomCode(code);
     setIsRoomHost(true);
     setScreen("lobby");
   };
 
   const startRoomMatch = () => {
     if (!isRoomHost) return;
-    roomChannel.current?.postMessage({
-      type: "START_MATCH",
-      settings: { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty },
-    });
+    const settings = { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty };
+    saveLocalRoom(roomCode, { status: "started", settings });
+    roomChannel.current?.postMessage({ type: "START_MATCH", settings });
     startMatch();
   };
 
