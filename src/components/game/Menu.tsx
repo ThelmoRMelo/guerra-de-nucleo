@@ -57,7 +57,10 @@ export function Menu() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-menu-gradient px-4 py-10 font-display text-foreground">
+    <div
+      className="relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-menu-gradient px-4 pt-10 font-display text-foreground"
+      style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}
+    >
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-accent/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-primary/25 blur-3xl" />
 
