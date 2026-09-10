@@ -14,13 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      room_players: {
+        Row: {
+          color: string
+          connected: boolean
+          id: string
+          is_host: boolean
+          joined_at: string
+          name: string
+          player_id: string
+          room_code: string
+          slot: number
+        }
+        Insert: {
+          color: string
+          connected?: boolean
+          id?: string
+          is_host?: boolean
+          joined_at?: string
+          name: string
+          player_id: string
+          room_code: string
+          slot: number
+        }
+        Update: {
+          color?: string
+          connected?: boolean
+          id?: string
+          is_host?: boolean
+          joined_at?: string
+          name?: string
+          player_id?: string
+          room_code?: string
+          slot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_players_room_code_fkey"
+            columns: ["room_code"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          bot_difficulty: string
+          code: string
+          core_restoration: boolean
+          created_at: string
+          fill_with_bots: boolean
+          host_id: string
+          max_players: number
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bot_difficulty?: string
+          code: string
+          core_restoration?: boolean
+          created_at?: string
+          fill_with_bots?: boolean
+          host_id: string
+          max_players?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_difficulty?: string
+          code?: string
+          core_restoration?: boolean
+          created_at?: string
+          fill_with_bots?: boolean
+          host_id?: string
+          max_players?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_room: {
+        Args: {
+          p_bot_difficulty: string
+          p_code: string
+          p_color: string
+          p_core_restoration: boolean
+          p_fill_with_bots: boolean
+          p_host_id: string
+          p_name: string
+        }
+        Returns: Json
+      }
+      join_room: {
+        Args: {
+          p_code: string
+          p_color: string
+          p_name: string
+          p_player_id: string
+        }
+        Returns: Json
+      }
+      leave_room: {
+        Args: { p_code: string; p_player_id: string }
+        Returns: Json
+      }
+      start_room_match: {
+        Args: { p_code: string; p_host_id: string }
+        Returns: Json
+      }
+      update_room_settings: {
+        Args: {
+          p_bot_difficulty: string
+          p_code: string
+          p_core_restoration: boolean
+          p_fill_with_bots: boolean
+          p_host_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
