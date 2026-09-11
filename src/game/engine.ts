@@ -8,11 +8,13 @@ import {
   type WeaponId,
 } from "./config";
 import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
+import { OBSTACLES } from "./nav";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
 import { ensureBrain, resetBotAfterRespawn, updateBot, type Difficulty } from "./bot";
 
 let uid = 1;
 const nextId = () => uid++;
+const CHARACTER_COLLISION_RADIUS = 0.62;
 
 function emptyUpgrades(): Record<UpgradeId, number> {
   return { velocidade: 0, armadura: 0, regeneracao: 0, municao: 0, recarga: 0, nucleo: 0 };
@@ -252,12 +254,15 @@ export class GameEngine {
   }
 
   moveEntity(p: Participant, dx: number, dz: number, dt: number) {
+    this.resolveObstacleOverlap(p);
     const speed = this.speedOf(p);
     const nx = p.pos.x + dx * speed * dt;
     const nz = p.pos.z + dz * speed * dt;
     if (p.pos.y >= -0.01) {
-      if (isOnGround(nx, p.pos.z)) p.pos.x = nx;
-      if (isOnGround(p.pos.x, nz)) p.pos.z = nz;
+      // Os eixos são avaliados separadamente para que o personagem deslize
+      // ao longo do obstáculo, em vez de atravessá-lo ou parar por completo.
+      if (this.canOccupy(p, nx, p.pos.z)) p.pos.x = nx;
+      if (this.canOccupy(p, p.pos.x, nz)) p.pos.z = nz;
       if (!isOnGround(p.pos.x, p.pos.z)) p.vel.y = -1;
     } else {
       p.pos.x = nx;
@@ -435,6 +440,27 @@ export class GameEngine {
       p.yaw += angle * alpha;
     }
     if (p.moving) p.walkPhase += dt * 9;
+  }
+
+  private canOccupy(p: Participant, x: number, z: number) {
+    if (!isOnGround(x, z)) return true;
+    return !OBSTACLES.some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.r + CHARACTER_COLLISION_RADIUS);
+  }
+
+  /** Expulsa com suavidade personagens que já estavam dentro de um prop ao carregar a correção. */
+  private resolveObstacleOverlap(p: Participant) {
+    if (p.pos.y < -0.01) return;
+    for (const obstacle of OBSTACLES) {
+      const dx = p.pos.x - obstacle.x;
+      const dz = p.pos.z - obstacle.z;
+      const distance = Math.hypot(dx, dz);
+      const minDistance = obstacle.r + CHARACTER_COLLISION_RADIUS;
+      if (distance >= minDistance) continue;
+      const nx = distance > 0.001 ? dx / distance : Math.cos(p.yaw);
+      const nz = distance > 0.001 ? dz / distance : Math.sin(p.yaw);
+      p.pos.x = obstacle.x + nx * minDistance;
+      p.pos.z = obstacle.z + nz * minDistance;
+    }
   }
 
   damageCore(owner: Participant, amount: number, from: Participant) {
