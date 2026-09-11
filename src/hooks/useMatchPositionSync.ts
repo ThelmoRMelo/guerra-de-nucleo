@@ -26,16 +26,27 @@ export function useMatchPositionSync(engine: GameEngine) {
     const apply = (state: RemotePlayerState) => {
       if (!disposed && state.player_id !== playerId) engine.applyRemotePlayerState(state);
     };
-    const publish = () => {
+    const stateForBroadcast = (): RemotePlayerState => {
       const player = engine.player;
+      return {
+        room_code: roomCode,
+        player_id: playerId,
+        pos_x: player.pos.x,
+        pos_y: player.pos.y,
+        pos_z: player.pos.z,
+        yaw: player.yaw,
+        moving: player.moving,
+      };
+    };
+    const persist = (state: RemotePlayerState) => {
       void supabase.rpc("update_room_player_state", {
         p_code: roomCode,
         p_player_id: playerId,
-        p_pos_x: player.pos.x,
-        p_pos_y: player.pos.y,
-        p_pos_z: player.pos.z,
-        p_yaw: player.yaw,
-        p_moving: player.moving,
+        p_pos_x: state.pos_x,
+        p_pos_y: state.pos_y,
+        p_pos_z: state.pos_z,
+        p_yaw: state.yaw,
+        p_moving: state.moving,
       });
     };
 
@@ -47,14 +58,26 @@ export function useMatchPositionSync(engine: GameEngine) {
 
     const channel = supabase
       .channel(`match-position:${roomCode}`)
+      .on("broadcast", { event: "player-state" }, ({ payload }) => apply(payload as RemotePlayerState))
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "room_player_states", filter: `room_code=eq.${roomCode}` },
         (payload) => apply(payload.new as RemotePlayerState),
       )
-      .subscribe();
-    publish();
-    const timer = window.setInterval(publish, 100);
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        const state = stateForBroadcast();
+        persist(state);
+        void channel.send({ type: "broadcast", event: "player-state", payload: state });
+      });
+
+    // Broadcast mostra movimento imediatamente para quem já está na partida;
+    // a RPC salva o mesmo estado para jogadores que entrarem depois.
+    const timer = window.setInterval(() => {
+      const state = stateForBroadcast();
+      persist(state);
+      void channel.send({ type: "broadcast", event: "player-state", payload: state });
+    }, 100);
 
     return () => {
       disposed = true;
