@@ -154,12 +154,16 @@ export class GameEngine {
       (p) => !p.isBot && p.id !== this.playerId && p.networkPlayerId === state.player_id,
     );
     if (!participant || participant.eliminated) return;
-    participant.pos.x = state.pos_x;
-    participant.pos.y = state.pos_y;
-    participant.pos.z = state.pos_z;
-    participant.yaw = state.yaw;
+    const target = { x: state.pos_x, y: state.pos_y, z: state.pos_z };
+    // No primeiro pacote, posiciona imediatamente. Nos demais, mantém o
+    // pacote como alvo e deixa a interpolação por frame suavizar o trajeto.
+    if (!participant.networkTargetPos) {
+      participant.pos = { ...target };
+      participant.yaw = state.yaw;
+    }
+    participant.networkTargetPos = target;
+    participant.networkTargetYaw = state.yaw;
     participant.moving = state.moving;
-    if (state.moving) participant.walkPhase += 0.45;
   }
 
   /** Replica um dano já confirmado pelo jogador que atirou, sem recalcular armadura. */
@@ -195,6 +199,7 @@ export class GameEngine {
     this.updatePlayer(dt, input);
     for (const p of this.participants) {
       if (p.isBot) this.updateBot(dt, p);
+      else if (p.id !== this.playerId) this.interpolateRemotePlayer(p, dt);
       this.updateCommon(dt, p);
     }
     this.updateGenerators(dt);
@@ -402,6 +407,21 @@ export class GameEngine {
       this.onHumanDamage?.(target.networkPlayerId, reduced, from.networkPlayerId);
     }
     if (target.hp <= 0) this.kill(target, from);
+  }
+
+  /** Suaviza pacotes de rede de 10 Hz para a taxa de quadros da tela. */
+  private interpolateRemotePlayer(p: Participant, dt: number) {
+    const target = p.networkTargetPos;
+    if (!target) return;
+    const alpha = 1 - Math.exp(-18 * dt);
+    p.pos.x += (target.x - p.pos.x) * alpha;
+    p.pos.y += (target.y - p.pos.y) * alpha;
+    p.pos.z += (target.z - p.pos.z) * alpha;
+    if (p.networkTargetYaw !== undefined) {
+      const angle = Math.atan2(Math.sin(p.networkTargetYaw - p.yaw), Math.cos(p.networkTargetYaw - p.yaw));
+      p.yaw += angle * alpha;
+    }
+    if (p.moving) p.walkPhase += dt * 9;
   }
 
   damageCore(owner: Participant, amount: number, from: Participant) {

@@ -33,8 +33,11 @@ export interface Participant {
   coreHp: number;
   coreRestorations: number;
   pos: Vec3;
+  /** Último estado remoto recebido; a posição exibida se aproxima dele por frame. */
+  networkTargetPos?: Vec3;
   vel: Vec3;
   yaw: number;
+  networkTargetYaw?: number;
   moving: boolean;
   walkPhase: number;
   weapon: WeaponId;
