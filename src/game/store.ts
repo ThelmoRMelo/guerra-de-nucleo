@@ -34,6 +34,12 @@ export interface HudSnapshot {
   status: "running" | "victory" | "defeat";
 }
 
+export interface MatchPlayer {
+  playerId: string;
+  name: string;
+  color: string;
+}
+
 interface GameStore {
   screen: Screen;
   playerName: string;
@@ -53,6 +59,7 @@ interface GameStore {
   vibration: boolean;
   hud: HudSnapshot | null;
   engine: GameEngine | null;
+  matchPlayers: MatchPlayer[];
   matchId: number;
   startMatch: () => void;
   exitToMenu: () => void;
@@ -70,6 +77,7 @@ interface GameStore {
   setSetting: <K extends keyof GameStore>(k: K, v: GameStore[K]) => void;
   setHud: (h: HudSnapshot) => void;
   setEngine: (e: GameEngine | null) => void;
+  setMatchPlayers: (players: MatchPlayer[]) => void;
 }
 
 export const useGame = create<GameStore>((set) => ({
@@ -91,10 +99,12 @@ export const useGame = create<GameStore>((set) => ({
   vibration: true,
   hud: null,
   engine: null,
+  matchPlayers: [],
   matchId: 0,
   startMatch: () =>
     set((s) => ({ matchId: s.matchId + 1, screen: "match", hud: null, shopOpen: false, emoteOpen: false, paused: false })),
-  exitToMenu: () => set({ screen: "menu", hud: null, shopOpen: false, emoteOpen: false, paused: false }),
+  exitToMenu: () =>
+    set({ screen: "menu", hud: null, shopOpen: false, emoteOpen: false, paused: false, matchPlayers: [] }),
   setScreen: (screen) => set({ screen }),
   setName: (playerName) => {
     try {
@@ -116,4 +126,5 @@ export const useGame = create<GameStore>((set) => ({
   setSetting: (k, v) => set({ [k]: v } as never),
   setHud: (hud) => set({ hud }),
   setEngine: (engine) => set({ engine }),
+  setMatchPlayers: (matchPlayers) => set({ matchPlayers }),
 }));

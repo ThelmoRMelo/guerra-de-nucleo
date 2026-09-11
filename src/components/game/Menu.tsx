@@ -32,6 +32,7 @@ export function Menu() {
   const roomCode = useGame((s) => s.roomCode);
   const setRoomCode = useGame((s) => s.setRoomCode);
   const startMatch = useGame((s) => s.startMatch);
+  const setMatchPlayers = useGame((s) => s.setMatchPlayers);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const musicVolume = useGame((s) => s.musicVolume);
   const quality = useGame((s) => s.quality);
@@ -145,6 +146,7 @@ export function Menu() {
       setLobbyError(roomErrorMessage(res.error));
       return;
     }
+    setMatchPlayers(players.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })));
     startMatch();
   };
 

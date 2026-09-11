@@ -51,6 +51,9 @@ export function useRoomSync(code: string, active: boolean) {
         return;
       }
       setPlayers(p);
+      useGame.getState().setMatchPlayers(
+        p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
+      );
       apply(r);
     };
 
@@ -67,7 +70,13 @@ export function useRoomSync(code: string, active: boolean) {
         "postgres_changes",
         { event: "*", schema: "public", table: "room_players", filter: `room_code=eq.${code}` },
         () => {
-          void fetchRoomPlayers(code).then((p) => !cancelled && setPlayers(p));
+          void fetchRoomPlayers(code).then((p) => {
+            if (cancelled) return;
+            setPlayers(p);
+            useGame.getState().setMatchPlayers(
+              p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
+            );
+          });
         },
       )
       .subscribe((status) => {

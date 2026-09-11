@@ -32,6 +32,11 @@ export interface PlayerInput {
 
 export type MatchStatus = "running" | "victory" | "defeat";
 
+export interface HumanMatchParticipant {
+  name: string;
+  color: string;
+}
+
 export class GameEngine {
   time = 0;
   participants: Participant[] = [];
@@ -51,7 +56,7 @@ export class GameEngine {
 
   constructor(
     playerName: string,
-    humanNames: string[] = [],
+    otherHumans: HumanMatchParticipant[] = [],
     playerColor = TEAM_COLORS[0]!,
     difficulty: Difficulty = "normal",
     coreRestorationEnabled = true,
@@ -59,29 +64,28 @@ export class GameEngine {
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
-    const names = [playerName, ...humanNames];
-    const order = [0, 1, 2, 3, 4, 5, 6, 7];
+    const localColor = TEAM_COLORS.includes(playerColor) ? playerColor : TEAM_COLORS[0]!;
+    // O servidor já garante cores únicas. O motor preserva as cores recebidas e
+    // nunca troca silenciosamente a cor de outro humano.
+    const humans: HumanMatchParticipant[] = [{ name: playerName, color: localColor }];
+    for (const human of otherHumans) {
+      if (TEAM_COLORS.includes(human.color) && !humans.some((p) => p.color === human.color)) humans.push(human);
+    }
+    const humanIslands = humans.map((human) => TEAM_COLORS.indexOf(human.color));
+    const botIslands = TEAM_COLORS.map((_, island) => island).filter((island) => !humanIslands.includes(island));
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
-    const participantCount = fillEmptySlotsWithBots ? 8 : names.length;
+    const participantCount = fillEmptySlotsWithBots ? 8 : humans.length;
     for (let i = 0; i < participantCount; i++) {
-      const human = i < names.length;
+      const human = i < humans.length;
+      const island = human ? humanIslands[i]! : botIslands[i - humans.length]!;
       this.participants.push(
         this.makeParticipant(
           human ? `p${i}` : `bot${i}`,
-          human ? names[i]! : botNames[i % botNames.length]!,
+          human ? humans[i]!.name : botNames[i % botNames.length]!,
           !human,
-          order[i]!,
+          island,
         ),
       );
-    }
-    // A cor escolhida pelo jogador é única: quem já a usava recebe a cor anterior dele.
-    const player = this.player;
-    const chosenColor = TEAM_COLORS.includes(playerColor) ? playerColor : player.color;
-    const occupant = this.participants.find((p) => p.id !== player.id && p.color === chosenColor);
-    if (occupant) {
-      const previousColor = player.color;
-      player.color = chosenColor;
-      occupant.color = previousColor;
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);

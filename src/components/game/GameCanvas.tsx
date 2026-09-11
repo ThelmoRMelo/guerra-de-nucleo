@@ -10,6 +10,7 @@ import { GameEngine } from "@/game/engine";
 import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
 import { playSound, setSfxVolume } from "@/game/audio";
 import { useGame } from "@/game/store";
+import { getLocalPlayerId } from "@/lib/room";
 
 export function GameCanvas() {
   const wrapper = useRef<HTMLDivElement>(null);
@@ -18,6 +19,7 @@ export function GameCanvas() {
   const botDifficulty = useGame((s) => s.botDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
   const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
+  const matchPlayers = useGame((s) => s.matchPlayers);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
   const sensitivity = useGame((s) => s.sensitivity);
@@ -31,9 +33,13 @@ export function GameCanvas() {
 
 
   const engine = useMemo(() => {
+    const localPlayerId = getLocalPlayerId();
+    const otherHumans = matchPlayers
+      .filter((player) => player.playerId !== localPlayerId)
+      .map((player) => ({ name: player.name, color: player.color }));
     const e = new GameEngine(
       playerName,
-      [],
+      otherHumans,
       teamColor,
       botDifficulty,
       coreRestorationEnabled,
