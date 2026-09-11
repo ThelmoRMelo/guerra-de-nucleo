@@ -158,6 +158,8 @@ export class GameEngine {
       (p) => !p.isBot && p.id !== this.playerId && p.networkPlayerId === state.player_id,
     );
     if (!participant || participant.eliminated) return;
+    // Estados fora da arena nunca são aceitos de outro cliente.
+    if (!isOnGround(state.pos_x, state.pos_z)) return;
     const target = { x: state.pos_x, y: state.pos_y, z: state.pos_z };
     // No primeiro pacote, posiciona imediatamente. Nos demais, mantém o
     // pacote como alvo e deixa a interpolação por frame suavizar o trajeto.
@@ -254,6 +256,7 @@ export class GameEngine {
   }
 
   moveEntity(p: Participant, dx: number, dz: number, dt: number) {
+    this.keepInsideArena(p);
     this.resolveObstacleOverlap(p);
     const speed = this.speedOf(p);
     const nx = p.pos.x + dx * speed * dt;
@@ -443,8 +446,19 @@ export class GameEngine {
   }
 
   private canOccupy(p: Participant, x: number, z: number) {
-    if (!isOnGround(x, z)) return true;
+    // A borda de cada ilha, ponte e plataforma central é uma barreira invisível.
+    // Nunca aceitamos um passo fora do chão jogável, evitando quedas no vazio.
+    if (!isOnGround(x, z)) return false;
     return !OBSTACLES.some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.r + CHARACTER_COLLISION_RADIUS);
+  }
+
+  /** Recupera com segurança entidades que estavam fora da arena antes da barreira existir. */
+  private keepInsideArena(p: Participant) {
+    if (p.pos.y >= -0.01 && isOnGround(p.pos.x, p.pos.z)) return;
+    const spawn = ISLANDS[p.island]!.spawn;
+    p.pos = { ...spawn };
+    p.vel = { x: 0, y: 0, z: 0 };
+    p.moving = false;
   }
 
   /** Expulsa com suavidade personagens que já estavam dentro de um prop ao carregar a correção. */
