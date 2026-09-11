@@ -33,8 +33,18 @@ export interface PlayerInput {
 export type MatchStatus = "running" | "victory" | "defeat";
 
 export interface HumanMatchParticipant {
+  playerId: string;
   name: string;
   color: string;
+}
+
+export interface RemotePlayerState {
+  player_id: string;
+  pos_x: number;
+  pos_y: number;
+  pos_z: number;
+  yaw: number;
+  moving: boolean;
 }
 
 export class GameEngine {
@@ -61,13 +71,14 @@ export class GameEngine {
     difficulty: Difficulty = "normal",
     coreRestorationEnabled = true,
     fillEmptySlotsWithBots = true,
+    localNetworkPlayerId = "",
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
     const localColor = TEAM_COLORS.includes(playerColor) ? playerColor : TEAM_COLORS[0]!;
     // O servidor já garante cores únicas. O motor preserva as cores recebidas e
     // nunca troca silenciosamente a cor de outro humano.
-    const humans: HumanMatchParticipant[] = [{ name: playerName, color: localColor }];
+    const humans: HumanMatchParticipant[] = [{ playerId: localNetworkPlayerId, name: playerName, color: localColor }];
     for (const human of otherHumans) {
       if (TEAM_COLORS.includes(human.color) && !humans.some((p) => p.color === human.color)) humans.push(human);
     }
@@ -78,14 +89,14 @@ export class GameEngine {
     for (let i = 0; i < participantCount; i++) {
       const human = i < humans.length;
       const island = human ? humanIslands[i]! : botIslands[i - humans.length]!;
-      this.participants.push(
-        this.makeParticipant(
+      const participant = this.makeParticipant(
           human ? `p${i}` : `bot${i}`,
           human ? humans[i]!.name : botNames[i % botNames.length]!,
           !human,
           island,
-        ),
-      );
+        );
+      if (human) participant.networkPlayerId = humans[i]!.playerId;
+      this.participants.push(participant);
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);
@@ -133,6 +144,20 @@ export class GameEngine {
 
   get player(): Participant {
     return this.participants.find((p) => p.id === this.playerId)!;
+  }
+
+  /** Aplica a posição recebida do dono do personagem, sem afetar o jogador local. */
+  applyRemotePlayerState(state: RemotePlayerState) {
+    const participant = this.participants.find(
+      (p) => !p.isBot && p.id !== this.playerId && p.networkPlayerId === state.player_id,
+    );
+    if (!participant || participant.eliminated) return;
+    participant.pos.x = state.pos_x;
+    participant.pos.y = state.pos_y;
+    participant.pos.z = state.pos_z;
+    participant.yaw = state.yaw;
+    participant.moving = state.moving;
+    if (state.moving) participant.walkPhase += 0.45;
   }
 
   pushEvent(text: string) {

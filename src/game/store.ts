@@ -104,7 +104,16 @@ export const useGame = create<GameStore>((set) => ({
   startMatch: () =>
     set((s) => ({ matchId: s.matchId + 1, screen: "match", hud: null, shopOpen: false, emoteOpen: false, paused: false })),
   exitToMenu: () =>
-    set({ screen: "menu", hud: null, shopOpen: false, emoteOpen: false, paused: false, matchPlayers: [] }),
+    set({
+      screen: "menu",
+      hud: null,
+      shopOpen: false,
+      emoteOpen: false,
+      paused: false,
+      matchPlayers: [],
+      roomCode: "",
+      isRoomHost: true,
+    }),
   setScreen: (screen) => set({ screen }),
   setName: (playerName) => {
     try {

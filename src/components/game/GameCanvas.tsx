@@ -11,6 +11,7 @@ import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
 import { playSound, setSfxVolume } from "@/game/audio";
 import { useGame } from "@/game/store";
 import { getLocalPlayerId } from "@/lib/room";
+import { useMatchPositionSync } from "@/hooks/useMatchPositionSync";
 
 export function GameCanvas() {
   const wrapper = useRef<HTMLDivElement>(null);
@@ -36,7 +37,7 @@ export function GameCanvas() {
     const localPlayerId = getLocalPlayerId();
     const otherHumans = matchPlayers
       .filter((player) => player.playerId !== localPlayerId)
-      .map((player) => ({ name: player.name, color: player.color }));
+      .map((player) => ({ playerId: player.playerId, name: player.name, color: player.color }));
     const e = new GameEngine(
       playerName,
       otherHumans,
@@ -44,11 +45,14 @@ export function GameCanvas() {
       botDifficulty,
       coreRestorationEnabled,
       fillEmptySlotsWithBots,
+      localPlayerId,
     );
     e.onSound = playSound;
     return e;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useMatchPositionSync(engine);
 
   useEffect(() => {
     setEngine(engine);

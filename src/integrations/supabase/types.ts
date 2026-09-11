@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      room_player_states: {
+        Row: {
+          moving: boolean
+          player_id: string
+          pos_x: number
+          pos_y: number
+          pos_z: number
+          room_code: string
+          updated_at: string
+          yaw: number
+        }
+        Insert: {
+          moving?: boolean
+          player_id: string
+          pos_x: number
+          pos_y: number
+          pos_z: number
+          room_code: string
+          updated_at?: string
+          yaw: number
+        }
+        Update: {
+          moving?: boolean
+          player_id?: string
+          pos_x?: number
+          pos_y?: number
+          pos_z?: number
+          room_code?: string
+          updated_at?: string
+          yaw?: number
+        }
+        Relationships: []
+      }
       room_players: {
         Row: {
           color: string
@@ -143,6 +176,18 @@ export type Database = {
       }
       update_room_player_color: {
         Args: { p_code: string; p_color: string; p_player_id: string }
+        Returns: Json
+      }
+      update_room_player_state: {
+        Args: {
+          p_code: string
+          p_moving: boolean
+          p_player_id: string
+          p_pos_x: number
+          p_pos_y: number
+          p_pos_z: number
+          p_yaw: number
+        }
         Returns: Json
       }
     }

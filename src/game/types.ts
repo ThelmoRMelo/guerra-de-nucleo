@@ -21,6 +21,8 @@ export type BotState =
 
 export interface Participant {
   id: string;
+  /** UUID da sala para participantes humanos; não existe para bots. */
+  networkPlayerId?: string;
   name: string;
   isBot: boolean;
   island: number;
