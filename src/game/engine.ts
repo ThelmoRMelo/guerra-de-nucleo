@@ -63,6 +63,8 @@ export class GameEngine {
   private centerTimer = 0;
   onEvent?: (text: string) => void;
   onSound?: (name: string) => void;
+  /** Emite um acerto causado pelo jogador local contra outro humano da sala. */
+  onHumanDamage?: (targetPlayerId: string, amount: number, sourcePlayerId: string) => void;
 
   constructor(
     playerName: string,
@@ -158,6 +160,17 @@ export class GameEngine {
     participant.yaw = state.yaw;
     participant.moving = state.moving;
     if (state.moving) participant.walkPhase += 0.45;
+  }
+
+  /** Replica um dano já confirmado pelo jogador que atirou, sem recalcular armadura. */
+  applyNetworkDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
+    const target = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
+    const source = this.participants.find((p) => !p.isBot && p.networkPlayerId === sourcePlayerId) ?? null;
+    if (!target || !target.alive || target.eliminated || target.protectedUntil > this.time) return;
+    target.hp = Math.max(0, target.hp - amount);
+    target.lastDamageAt = this.time;
+    if (target.id === this.playerId) this.onSound?.("hurt");
+    if (target.hp <= 0) this.kill(target, source);
   }
 
   pushEvent(text: string) {
@@ -378,6 +391,16 @@ export class GameEngine {
     target.hp = Math.max(0, target.hp - reduced);
     target.lastDamageAt = this.time;
     if (target.id === this.playerId) this.onSound?.("hurt");
+    // O atirador local é quem detecta o raio. Repasse exatamente o dano já
+    // reduzido para que todos os clientes exibam a mesma vida do alvo.
+    if (
+      from.id === this.playerId &&
+      !target.isBot &&
+      target.networkPlayerId &&
+      from.networkPlayerId
+    ) {
+      this.onHumanDamage?.(target.networkPlayerId, reduced, from.networkPlayerId);
+    }
     if (target.hp <= 0) this.kill(target, from);
   }
 

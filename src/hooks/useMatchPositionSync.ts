@@ -14,6 +14,12 @@ interface RemotePlayerState {
   moving: boolean;
 }
 
+interface PlayerDamageEvent {
+  target_player_id: string;
+  source_player_id: string;
+  amount: number;
+}
+
 /** Sincroniza somente o estado visual de movimento dos humanos da sala. */
 export function useMatchPositionSync(engine: GameEngine) {
   const roomCode = useGame((s) => s.roomCode);
@@ -59,6 +65,13 @@ export function useMatchPositionSync(engine: GameEngine) {
     const channel = supabase
       .channel(`match-position:${roomCode}`)
       .on("broadcast", { event: "player-state" }, ({ payload }) => apply(payload as RemotePlayerState))
+      .on("broadcast", { event: "player-damage" }, ({ payload }) => {
+        const event = payload as PlayerDamageEvent;
+        // O atirador já aplicou o dano localmente; os demais replicam o mesmo acerto.
+        if (event.source_player_id !== playerId) {
+          engine.applyNetworkDamage(event.target_player_id, event.amount, event.source_player_id);
+        }
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "room_player_states", filter: `room_code=eq.${roomCode}` },
@@ -71,6 +84,18 @@ export function useMatchPositionSync(engine: GameEngine) {
         void channel.send({ type: "broadcast", event: "player-state", payload: state });
       });
 
+    engine.onHumanDamage = (targetPlayerId, amount, sourcePlayerId) => {
+      void channel.send({
+        type: "broadcast",
+        event: "player-damage",
+        payload: {
+          target_player_id: targetPlayerId,
+          source_player_id: sourcePlayerId,
+          amount,
+        } satisfies PlayerDamageEvent,
+      });
+    };
+
     // Broadcast mostra movimento imediatamente para quem já está na partida;
     // a RPC salva o mesmo estado para jogadores que entrarem depois.
     const timer = window.setInterval(() => {
@@ -81,6 +106,7 @@ export function useMatchPositionSync(engine: GameEngine) {
 
     return () => {
       disposed = true;
+      engine.onHumanDamage = undefined;
       window.clearInterval(timer);
       supabase.removeChannel(channel);
     };
