@@ -20,6 +20,12 @@ interface PlayerDamageEvent {
   amount: number;
 }
 
+interface CoreDamageEvent {
+  target_player_id: string;
+  source_player_id: string;
+  amount: number;
+}
+
 /** Sincroniza somente o estado visual de movimento dos humanos da sala. */
 export function useMatchPositionSync(engine: GameEngine) {
   const roomCode = useGame((s) => s.roomCode);
@@ -72,6 +78,13 @@ export function useMatchPositionSync(engine: GameEngine) {
           engine.applyNetworkDamage(event.target_player_id, event.amount, event.source_player_id);
         }
       })
+      .on("broadcast", { event: "core-damage" }, ({ payload }) => {
+        const event = payload as CoreDamageEvent;
+        // O atirador já reduziu o núcleo localmente; os demais copiam o resultado.
+        if (event.source_player_id !== playerId) {
+          engine.applyNetworkCoreDamage(event.target_player_id, event.amount, event.source_player_id);
+        }
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "room_player_states", filter: `room_code=eq.${roomCode}` },
@@ -95,6 +108,17 @@ export function useMatchPositionSync(engine: GameEngine) {
         } satisfies PlayerDamageEvent,
       });
     };
+    engine.onHumanCoreDamage = (targetPlayerId, amount, sourcePlayerId) => {
+      void channel.send({
+        type: "broadcast",
+        event: "core-damage",
+        payload: {
+          target_player_id: targetPlayerId,
+          source_player_id: sourcePlayerId,
+          amount,
+        } satisfies CoreDamageEvent,
+      });
+    };
 
     // Broadcast mostra movimento imediatamente para quem já está na partida;
     // a RPC salva o mesmo estado para jogadores que entrarem depois.
@@ -107,6 +131,7 @@ export function useMatchPositionSync(engine: GameEngine) {
     return () => {
       disposed = true;
       engine.onHumanDamage = undefined;
+      engine.onHumanCoreDamage = undefined;
       window.clearInterval(timer);
       supabase.removeChannel(channel);
     };

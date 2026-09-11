@@ -65,6 +65,8 @@ export class GameEngine {
   onSound?: (name: string) => void;
   /** Emite um acerto causado pelo jogador local contra outro humano da sala. */
   onHumanDamage?: (targetPlayerId: string, amount: number, sourcePlayerId: string) => void;
+  /** Emite dano ao núcleo de outro humano para todos os clientes da sala. */
+  onHumanCoreDamage?: (targetPlayerId: string, amount: number, sourcePlayerId: string) => void;
 
   constructor(
     playerName: string,
@@ -175,6 +177,17 @@ export class GameEngine {
     target.lastDamageAt = this.time;
     if (target.id === this.playerId) this.onSound?.("hurt");
     if (target.hp <= 0) this.kill(target, source);
+  }
+
+  /** Replica dano de núcleo confirmado pelo atirador para todos os participantes. */
+  applyNetworkCoreDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
+    const owner = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
+    if (!owner || owner.coreHp <= 0) return;
+    owner.coreHp = Math.max(0, owner.coreHp - amount);
+    if (owner.coreHp <= 0) {
+      this.onSound?.("core");
+      this.pushEvent(`💥 NÚCLEO DE ${owner.name.toUpperCase()} DESTRUÍDO!`);
+    }
   }
 
   pushEvent(text: string) {
@@ -427,6 +440,14 @@ export class GameEngine {
   damageCore(owner: Participant, amount: number, from: Participant) {
     if (owner.coreHp <= 0) return;
     owner.coreHp = Math.max(0, owner.coreHp - amount);
+    if (
+      from.id === this.playerId &&
+      !owner.isBot &&
+      owner.networkPlayerId &&
+      from.networkPlayerId
+    ) {
+      this.onHumanCoreDamage?.(owner.networkPlayerId, amount, from.networkPlayerId);
+    }
     if (owner.coreHp <= 0) {
       this.onSound?.("core");
       this.pushEvent(`💥 NÚCLEO DE ${owner.name.toUpperCase()} DESTRUÍDO!`);
