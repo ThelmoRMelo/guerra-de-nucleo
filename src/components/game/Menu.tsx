@@ -1,41 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { BOT_NAMES, TEAM_COLORS } from "@/game/config";
+import { useEffect, useState } from "react";
+import { TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
-
-function randomCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-}
-
-type RoomSettings = {
-  coreRestorationEnabled: boolean;
-  fillEmptySlotsWithBots: boolean;
-  botDifficulty: "facil" | "normal" | "dificil";
-};
-
-type LocalRoomState = {
-  status: "lobby" | "started";
-  settings: RoomSettings;
-};
-
-const roomStorageKey = (code: string) => `guerra-de-nucleo:room:${code}`;
-
-function readLocalRoom(code: string): LocalRoomState | null {
-  try {
-    const raw = localStorage.getItem(roomStorageKey(code));
-    return raw ? (JSON.parse(raw) as LocalRoomState) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveLocalRoom(code: string, state: LocalRoomState) {
-  try {
-    localStorage.setItem(roomStorageKey(code), JSON.stringify(state));
-  } catch {
-    /* armazenamento local indisponível */
-  }
-}
+import { useRoomSync } from "@/hooks/useRoomSync";
+import {
+  createRoom,
+  getLocalPlayerId,
+  joinRoom,
+  leaveRoom,
+  roomErrorMessage,
+  startRoomMatch,
+  updateRoomSettings,
+} from "@/lib/room";
 
 export function Menu() {
   const screen = useGame((s) => s.screen);
@@ -68,8 +43,12 @@ export function Menu() {
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [lobbyError, setLobbyError] = useState("");
   const [copied, setCopied] = useState(false);
-  const roomChannel = useRef<BroadcastChannel | null>(null);
+
+  const inLobby = screen === "lobby";
+  const { room, players, connection, notice } = useRoomSync(roomCode, inLobby);
 
   useEffect(() => {
     try {
@@ -81,61 +60,82 @@ export function Menu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sincronização do lobby entre abas/janelas da mesma origem. O visitante não
-  // inicia localmente: ele recebe a ordem e as regras definidas pelo anfitrião.
-  useEffect(() => {
-    if (!roomCode || typeof BroadcastChannel === "undefined") return;
-    const channel = new BroadcastChannel(`guerra-de-nucleo:${roomCode}`);
-    roomChannel.current = channel;
-    const startAsGuest = (settings: RoomSettings) => {
-      if (useGame.getState().isRoomHost) return;
-      useGame.setState({
-        coreRestorationEnabled: settings.coreRestorationEnabled,
-        fillEmptySlotsWithBots: settings.fillEmptySlotsWithBots,
-        botDifficulty: settings.botDifficulty,
-      });
-      useGame.getState().startMatch();
-    };
-    channel.onmessage = (event: MessageEvent<{ type?: string; settings?: RoomSettings }>) => {
-      if (event.data.type === "START_MATCH" && event.data.settings) startAsGuest(event.data.settings);
-    };
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== roomStorageKey(roomCode) || !event.newValue) return;
-      try {
-        const room = JSON.parse(event.newValue) as LocalRoomState;
-        if (room.status === "started") startAsGuest(room.settings);
-      } catch {
-        /* estado inválido é ignorado */
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    const room = readLocalRoom(roomCode);
-    if (!isRoomHost && room?.status === "started") startAsGuest(room.settings);
-    return () => {
-      if (roomChannel.current === channel) roomChannel.current = null;
-      channel.close();
-      window.removeEventListener("storage", onStorage);
-    };
-  }, [roomCode, isRoomHost]);
-
-  const openLobby = () => {
-    const code = randomCode();
-    saveLocalRoom(code, {
-      status: "lobby",
-      settings: { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty },
+  const openLobby = async () => {
+    setBusy(true);
+    setLobbyError("");
+    const res = await createRoom({
+      hostId: getLocalPlayerId(),
+      name: playerName,
+      color: teamColor,
+      botDifficulty,
+      fillWithBots: fillEmptySlotsWithBots,
+      coreRestoration: coreRestorationEnabled,
     });
-    setRoomCode(code);
+    setBusy(false);
+    if (!res.ok) {
+      setLobbyError(roomErrorMessage(res.error));
+      return;
+    }
+    setRoomCode(res.code);
     setIsRoomHost(true);
     setScreen("lobby");
   };
 
-  const startRoomMatch = () => {
+  const doJoin = async () => {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length !== 6) {
+      setJoinError("Digite o código de 6 caracteres.");
+      return;
+    }
+    setBusy(true);
+    const res = await joinRoom(code, getLocalPlayerId(), playerName, teamColor);
+    setBusy(false);
+    if (!res.ok) {
+      setJoinError(roomErrorMessage(res.error));
+      return;
+    }
+    setJoinError("");
+    setRoomCode(code);
+    setIsRoomHost(false);
+    setJoinOpen(false);
+    setScreen("lobby");
+  };
+
+  const pushSettings = (next: {
+    botDifficulty?: typeof botDifficulty;
+    fillWithBots?: boolean;
+    coreRestoration?: boolean;
+  }) => {
+    if (!isRoomHost || !roomCode) return;
+    void updateRoomSettings(roomCode, getLocalPlayerId(), {
+      botDifficulty: next.botDifficulty ?? botDifficulty,
+      fillWithBots: next.fillWithBots ?? fillEmptySlotsWithBots,
+      coreRestoration: next.coreRestoration ?? coreRestorationEnabled,
+    });
+  };
+
+  const startRoom = async () => {
     if (!isRoomHost) return;
-    const settings = { coreRestorationEnabled, fillEmptySlotsWithBots, botDifficulty };
-    saveLocalRoom(roomCode, { status: "started", settings });
-    roomChannel.current?.postMessage({ type: "START_MATCH", settings });
+    setBusy(true);
+    const res = await startRoomMatch(roomCode, getLocalPlayerId());
+    setBusy(false);
+    if (!res.ok) {
+      setLobbyError(roomErrorMessage(res.error));
+      return;
+    }
     startMatch();
   };
+
+  const exitLobby = async () => {
+    if (roomCode) await leaveRoom(roomCode, getLocalPlayerId());
+    setRoomCode("");
+    setIsRoomHost(true);
+    setLobbyError("");
+    setScreen("menu");
+  };
+
+  const humanCount = players.length;
+  const slots = fillEmptySlotsWithBots ? 8 : Math.max(humanCount, 1);
 
   return (
     <div
@@ -215,12 +215,18 @@ export function Menu() {
               </p>
             </div>
 
+            {lobbyError && (
+              <p className="mt-3 rounded-lg bg-destructive/15 px-3 py-2 text-sm font-bold text-destructive">
+                {lobbyError}
+              </p>
+            )}
+
             <div className="mt-6 space-y-3">
               <button className="btn-arcade w-full text-lg" onClick={startMatch}>
                 JOGAR
               </button>
-              <button className="btn-arcade-ghost w-full" onClick={openLobby}>
-                CRIAR SALA
+              <button className="btn-arcade-ghost w-full" disabled={busy} onClick={() => void openLobby()}>
+                {busy ? "CRIANDO…" : "CRIAR SALA"}
               </button>
               <button className="btn-arcade-ghost w-full" onClick={() => setJoinOpen(true)}>
                 ENTRAR NA SALA
@@ -240,7 +246,24 @@ export function Menu() {
 
         {screen === "lobby" && (
           <div className="rounded-2xl bg-card/85 p-5 shadow-2xl">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Sua sala</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Sua sala</p>
+              <span
+                className={`text-xs font-black uppercase ${
+                  connection === "online"
+                    ? "text-accent"
+                    : connection === "conectando"
+                      ? "text-muted-foreground"
+                      : "text-destructive"
+                }`}
+              >
+                {connection === "online"
+                  ? "● AO VIVO"
+                  : connection === "conectando"
+                    ? "● CONECTANDO"
+                    : "● RECONECTANDO"}
+              </span>
+            </div>
             <div className="mt-1 flex items-center justify-between">
               <span className="text-3xl font-black tracking-[0.3em] text-accent">{roomCode}</span>
               <button
@@ -255,8 +278,14 @@ export function Menu() {
               </button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              O anfitrião controla o início da partida e as regras da sala.
+              Compartilhe este código: qualquer pessoa, em outro celular ou computador, pode entrar.
             </p>
+
+            {(notice || lobbyError) && (
+              <p className="mt-3 rounded-lg bg-destructive/15 px-3 py-2 text-sm font-bold text-destructive">
+                {notice || lobbyError}
+              </p>
+            )}
 
             <div className="mt-4 rounded-xl bg-muted/60 p-3">
               <p className="text-sm font-black">RESTAURAÇÃO DE NÚCLEO</p>
@@ -266,22 +295,22 @@ export function Menu() {
                     Você define se jogadores humanos podem restaurar o núcleo até duas vezes em qualquer comerciante.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      className={`rounded-lg px-3 py-2 text-xs font-black ${
-                        coreRestorationEnabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
-                      }`}
-                      onClick={() => setCoreRestorationEnabled(true)}
-                    >
-                      ON
-                    </button>
-                    <button
-                      className={`rounded-lg px-3 py-2 text-xs font-black ${
-                        !coreRestorationEnabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
-                      }`}
-                      onClick={() => setCoreRestorationEnabled(false)}
-                    >
-                      OFF
-                    </button>
+                    {[true, false].map((on) => (
+                      <button
+                        key={String(on)}
+                        className={`rounded-lg px-3 py-2 text-xs font-black ${
+                          coreRestorationEnabled === on
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground"
+                        }`}
+                        onClick={() => {
+                          setCoreRestorationEnabled(on);
+                          pushSettings({ coreRestoration: on });
+                        }}
+                      >
+                        {on ? "ON" : "OFF"}
+                      </button>
+                    ))}
                   </div>
                 </>
               ) : (
@@ -299,22 +328,22 @@ export function Menu() {
                     ON completa as vagas restantes com bots. OFF deixa apenas os jogadores humanos da sala.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      className={`rounded-lg px-3 py-2 text-xs font-black ${
-                        fillEmptySlotsWithBots ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
-                      }`}
-                      onClick={() => setFillEmptySlotsWithBots(true)}
-                    >
-                      ON
-                    </button>
-                    <button
-                      className={`rounded-lg px-3 py-2 text-xs font-black ${
-                        !fillEmptySlotsWithBots ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
-                      }`}
-                      onClick={() => setFillEmptySlotsWithBots(false)}
-                    >
-                      OFF
-                    </button>
+                    {[true, false].map((on) => (
+                      <button
+                        key={String(on)}
+                        className={`rounded-lg px-3 py-2 text-xs font-black ${
+                          fillEmptySlotsWithBots === on
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground"
+                        }`}
+                        onClick={() => {
+                          setFillEmptySlotsWithBots(on);
+                          pushSettings({ fillWithBots: on });
+                        }}
+                      >
+                        {on ? "ON" : "OFF"}
+                      </button>
+                    ))}
                   </div>
                 </>
               ) : (
@@ -324,34 +353,84 @@ export function Menu() {
               )}
             </div>
 
-            <ul className="mt-4 space-y-1.5">
-              {Array.from({ length: fillEmptySlotsWithBots ? 8 : 1 }, (_, i) => (
+            <div className="mt-3 rounded-xl bg-muted/60 p-3">
+              <p className="text-sm font-black">DIFICULDADE DOS BOTS</p>
+              {isRoomHost ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      ["facil", "FÁCIL"],
+                      ["normal", "NORMAL"],
+                      ["dificil", "DIFÍCIL"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      className={`rounded-lg px-2 py-2 text-xs font-black ${
+                        botDifficulty === value
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background text-muted-foreground"
+                      }`}
+                      onClick={() => {
+                        setBotDifficulty(value);
+                        pushSettings({ botDifficulty: value });
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Regra definida pelo anfitrião: {botDifficulty.toUpperCase()}
+                </p>
+              )}
+            </div>
+
+            <p className="mt-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
+              Jogadores conectados ({humanCount}/{room?.max_players ?? 8})
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {players.map((p) => (
                 <li
-                  key={i}
+                  key={p.id}
                   className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2 text-sm"
                 >
                   <span className="flex items-center gap-2 font-bold">
-                    <span style={{ color: lobbyColor(i, teamColor) }}>●</span>
-                    {i === 0 ? playerName : BOT_NAMES[i % BOT_NAMES.length]}
+                    <span style={{ color: `#${p.color.replace(/^#/, "").split("#")[0]}` }}>●</span>
+                    {p.name}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {i === 0 ? "ANFITRIÃO" : "BOT"}
+                    {p.is_host ? "ANFITRIÃO" : p.connected ? "JOGADOR" : "DESCONECTADO"}
+                  </span>
+                </li>
+              ))}
+              {Array.from({ length: Math.max(0, slots - humanCount) }, (_, i) => (
+                <li
+                  key={`bot-${i}`}
+                  className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 text-sm"
+                >
+                  <span className="font-bold text-muted-foreground">
+                    {fillEmptySlotsWithBots ? "Bot" : "Vaga livre"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {fillEmptySlotsWithBots ? "BOT" : "—"}
                   </span>
                 </li>
               ))}
             </ul>
 
             {isRoomHost ? (
-              <button className="btn-arcade mt-5 w-full" onClick={startRoomMatch}>
-                INICIAR PARTIDA
+              <button className="btn-arcade mt-5 w-full" disabled={busy} onClick={() => void startRoom()}>
+                {busy ? "INICIANDO…" : "INICIAR PARTIDA"}
               </button>
             ) : (
               <button className="btn-arcade mt-5 w-full opacity-60" disabled>
                 AGUARDANDO O ANFITRIÃO…
               </button>
             )}
-            <button className="btn-arcade-ghost mt-2 w-full" onClick={() => setScreen("menu")}>
-              VOLTAR
+            <button className="btn-arcade-ghost mt-2 w-full" onClick={() => void exitLobby()}>
+              SAIR DA SALA
             </button>
           </div>
         )}
@@ -474,20 +553,8 @@ export function Menu() {
           />
           {joinError && <p className="mt-2 text-sm font-bold text-destructive">{joinError}</p>}
           <div className="mt-4 flex gap-2">
-            <button
-              className="btn-arcade flex-1"
-              onClick={() => {
-                if (joinCode.length < 4) setJoinError("Sala não encontrada.");
-                else {
-                  setJoinError("");
-                  setRoomCode(joinCode);
-                  setIsRoomHost(false);
-                  setJoinOpen(false);
-                  setScreen("lobby");
-                }
-              }}
-            >
-              ENTRAR
+            <button className="btn-arcade flex-1" disabled={busy} onClick={() => void doJoin()}>
+              {busy ? "ENTRANDO…" : "ENTRAR"}
             </button>
             <button className="btn-arcade-ghost flex-1" onClick={() => setJoinOpen(false)}>
               CANCELAR
@@ -497,11 +564,6 @@ export function Menu() {
       )}
     </div>
   );
-}
-
-function lobbyColor(index: number, selectedColor: string) {
-  if (index === 0) return selectedColor;
-  return TEAM_COLORS[index] === selectedColor ? TEAM_COLORS[0]! : TEAM_COLORS[index]!;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
