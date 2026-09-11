@@ -397,7 +397,7 @@ export function Menu() {
                   className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2 text-sm"
                 >
                   <span className="flex items-center gap-2 font-bold">
-                    <span style={{ color: p.color.split("#")[0] ? p.color : undefined }}>●</span>
+                    <span style={{ color: `#${p.color.replace(/^#/, "").split("#")[0]}` }}>●</span>
                     {p.name}
                   </span>
                   <span className="text-xs text-muted-foreground">
