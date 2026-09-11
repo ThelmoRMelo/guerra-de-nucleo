@@ -141,6 +141,10 @@ export type Database = {
         }
         Returns: Json
       }
+      update_room_player_color: {
+        Args: { p_code: string; p_color: string; p_player_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

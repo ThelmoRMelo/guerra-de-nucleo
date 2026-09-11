@@ -4,11 +4,13 @@ import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
 import {
   createRoom,
+  fetchRoomPlayers,
   getLocalPlayerId,
   joinRoom,
   leaveRoom,
   roomErrorMessage,
   startRoomMatch,
+  updateRoomPlayerColor,
   updateRoomSettings,
 } from "@/lib/room";
 
@@ -42,6 +44,8 @@ export function Menu() {
   const [draft, setDraft] = useState(playerName);
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
+  const [joinColor, setJoinColor] = useState<string | null>(null);
+  const [joinOccupiedColors, setJoinOccupiedColors] = useState<string[]>([]);
   const [joinError, setJoinError] = useState("");
   const [busy, setBusy] = useState(false);
   const [lobbyError, setLobbyError] = useState("");
@@ -59,6 +63,19 @@ export function Menu() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length !== 6) {
+      setJoinOccupiedColors([]);
+      return;
+    }
+    void fetchRoomPlayers(code).then((roomPlayers) => {
+      setJoinOccupiedColors(
+        roomPlayers.filter((player) => player.player_id !== getLocalPlayerId()).map((player) => player.color),
+      );
+    });
+  }, [joinCode]);
 
   const openLobby = async () => {
     setBusy(true);
@@ -87,14 +104,19 @@ export function Menu() {
       setJoinError("Digite o código de 6 caracteres.");
       return;
     }
+    if (!joinColor) {
+      setJoinError("Escolha uma cor de equipe antes de entrar.");
+      return;
+    }
     setBusy(true);
-    const res = await joinRoom(code, getLocalPlayerId(), playerName, teamColor);
+    const res = await joinRoom(code, getLocalPlayerId(), playerName, joinColor);
     setBusy(false);
     if (!res.ok) {
       setJoinError(roomErrorMessage(res.error));
       return;
     }
     setJoinError("");
+    setTeamColor(res.color ?? joinColor);
     setRoomCode(code);
     setIsRoomHost(false);
     setJoinOpen(false);
@@ -136,6 +158,21 @@ export function Menu() {
 
   const humanCount = players.length;
   const slots = fillEmptySlotsWithBots ? 8 : Math.max(humanCount, 1);
+  const occupiedColors = new Set(players.map((player) => player.color));
+  const myPlayerId = getLocalPlayerId();
+
+  const changeLobbyColor = async (color: string) => {
+    if (isRoomHost || room?.status !== "lobby" || color === teamColor) return;
+    setBusy(true);
+    const res = await updateRoomPlayerColor(roomCode, myPlayerId, color);
+    setBusy(false);
+    if (!res.ok) {
+      setLobbyError(roomErrorMessage(res.error));
+      return;
+    }
+    setLobbyError("");
+    setTeamColor(res.color ?? color);
+  };
 
   return (
     <div
@@ -228,7 +265,15 @@ export function Menu() {
               <button className="btn-arcade-ghost w-full" disabled={busy} onClick={() => void openLobby()}>
                 {busy ? "CRIANDO…" : "CRIAR SALA"}
               </button>
-              <button className="btn-arcade-ghost w-full" onClick={() => setJoinOpen(true)}>
+              <button
+                className="btn-arcade-ghost w-full"
+                onClick={() => {
+                  setJoinColor(null);
+                  setJoinOccupiedColors([]);
+                  setJoinError("");
+                  setJoinOpen(true);
+                }}
+              >
                 ENTRAR NA SALA
               </button>
               <button className="btn-arcade-ghost w-full" onClick={() => setNameOpen(true)}>
@@ -285,6 +330,34 @@ export function Menu() {
               <p className="mt-3 rounded-lg bg-destructive/15 px-3 py-2 text-sm font-bold text-destructive">
                 {notice || lobbyError}
               </p>
+            )}
+
+            {!isRoomHost && (
+              <div className="mt-4 rounded-xl bg-muted/60 p-3">
+                <p className="text-sm font-black">SUA COR DE EQUIPE</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Escolha uma cor livre antes de a partida começar.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {TEAM_COLORS.map((color) => {
+                    const occupiedByOther = occupiedColors.has(color) && color !== teamColor;
+                    const selected = color === teamColor;
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        disabled={occupiedByOther || room?.status !== "lobby" || busy}
+                        aria-label={occupiedByOther ? "Cor ocupada" : "Escolher cor"}
+                        className={`h-9 w-9 rounded-full border-2 transition-transform disabled:cursor-not-allowed disabled:opacity-25 ${
+                          selected ? "scale-110 border-white ring-2 ring-accent" : "border-black/30"
+                        }`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => void changeLobbyColor(color)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             <div className="mt-4 rounded-xl bg-muted/60 p-3">
@@ -551,6 +624,30 @@ export function Menu() {
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="A7K92X"
           />
+          <p className="mt-4 text-sm font-black">ESCOLHA SUA COR</p>
+          <p className="mt-1 text-xs text-muted-foreground">Cores ocupadas na sala ficam bloqueadas.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {TEAM_COLORS.map((color) => {
+              const occupied = joinOccupiedColors.includes(color);
+              const selected = joinColor === color;
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  disabled={occupied}
+                  aria-label={occupied ? "Cor ocupada" : "Selecionar cor"}
+                  className={`h-9 w-9 rounded-full border-2 transition-transform disabled:cursor-not-allowed disabled:opacity-25 ${
+                    selected ? "scale-110 border-white ring-2 ring-accent" : "border-black/30"
+                  }`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => {
+                    setJoinColor(color);
+                    setJoinError("");
+                  }}
+                />
+              );
+            })}
+          </div>
           {joinError && <p className="mt-2 text-sm font-bold text-destructive">{joinError}</p>}
           <div className="mt-4 flex gap-2">
             <button className="btn-arcade flex-1" disabled={busy} onClick={() => void doJoin()}>

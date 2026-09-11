@@ -57,6 +57,9 @@ export const ROOM_ERRORS: Record<string, string> = {
   full: "A sala está cheia.",
   code_taken: "Código já em uso. Tente novamente.",
   not_host_or_started: "Apenas o anfitrião pode alterar isso.",
+  color_taken: "Esta cor acabou de ser escolhida. Selecione outra.",
+  invalid_color: "Selecione uma cor válida da paleta.",
+  invalid_player_colors: "Todos os jogadores precisam ter cores únicas antes de iniciar.",
   network: "Falha de conexão. Tente novamente.",
 };
 
@@ -94,6 +97,14 @@ export function joinRoom(code: string, playerId: string, name: string, color: st
     p_code: code.toUpperCase(),
     p_player_id: playerId,
     p_name: name,
+    p_color: color,
+  });
+}
+
+export function updateRoomPlayerColor(code: string, playerId: string, color: string) {
+  return callRpc("update_room_player_color", {
+    p_code: code.toUpperCase(),
+    p_player_id: playerId,
     p_color: color,
   });
 }
