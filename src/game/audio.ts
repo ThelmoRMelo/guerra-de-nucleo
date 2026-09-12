@@ -75,8 +75,18 @@ export function playSound(name: string) {
 }
 
 // Tema original de batalha chiptune: não reproduz músicas de outros jogos.
-const BATTLE_MELODY = [659, 784, 880, 784, 659, 587, 659, 523, 659, 784, 988, 784, 698, 659, 587, 523];
-const BATTLE_BASS = [131, 131, 147, 147, 165, 165, 147, 147];
+// Cinco seções distintas formam uma trilha de aproximadamente 30 segundos.
+const BATTLE_SECTIONS = [
+  [659, 784, 880, 784, 659, 587, 659, 523, 659, 784, 988, 784, 698, 659, 587, 523],
+  [523, 659, 784, 880, 784, 659, 587, 659, 698, 784, 880, 988, 880, 784, 698, 587],
+  [784, 880, 1047, 880, 784, 698, 784, 659, 740, 880, 988, 880, 740, 698, 659, 587],
+  [587, 659, 784, 659, 587, 523, 587, 698, 784, 988, 1175, 988, 880, 784, 698, 659],
+  [659, 740, 880, 988, 880, 740, 659, 587, 523, 659, 784, 880, 784, 698, 659, 523],
+];
+const BATTLE_MELODY = BATTLE_SECTIONS.flatMap((section, index) =>
+  index % 2 === 0 ? [...section, ...section.map((note) => note * 0.5)] : [...section.map((note) => note * 0.5), ...section],
+);
+const BATTLE_BASS = [131, 147, 165, 147, 123, 147, 175, 147, 110, 131, 147, 165, 123, 147, 165, 196];
 
 function musicNote(c: AudioContext, when: number, freq: number, duration: number, gain: number, type: OscillatorType) {
   const osc = c.createOscillator();
