@@ -30,6 +30,10 @@ interface Brain {
   strafeSide: number;
   strafeUntil: number;
   seenEnemyAt: number;
+  /** Impede que a decisão econômica cancele a saída ofensiva logo após o respawn. */
+  offensiveUntil: number;
+  /** No respawn, só libera decisões normais depois de o bot sair da própria ilha. */
+  mustLeaveHomeIsland: boolean;
   slot: number;
 }
 
@@ -65,6 +69,8 @@ export function ensureBrain(b: Participant, index: number): Brain {
       strafeSide: Math.random() < 0.5 ? 1 : -1,
       strafeUntil: 0,
       seenEnemyAt: -99,
+      offensiveUntil: 0,
+      mustLeaveHomeIsland: false,
       slot: index,
     };
   }
@@ -86,15 +92,12 @@ export function resetBotAfterRespawn(engine: GameEngine, b: Participant, time: n
   brain.detourUntil = 0;
   brain.strafeUntil = 0;
   brain.seenEnemyAt = -99;
+  brain.mustLeaveHomeIsland = true;
   b.botTargetId = null;
   b.moving = false;
-  // Evita a rotina de coleta/retorno após morrer: ela era a responsável por
-  // deixar bots presos na própria ilha. O bot sai já com um núcleo inimigo alvo.
-  const targetIsland = chooseTargetIsland(engine, b);
-  brain.targetIsland = targetIsland;
-  b.botState = targetIsland >= 0 ? "ATACAR_BASE" : "COLETAR";
-  // Mantém o alvo por tempo suficiente para iniciar a rota ofensiva.
-  b.botDecisionAt = time + 0.8;
+  // O respawn deve sempre recomeçar pela rota ofensiva. O bloqueio temporário
+  // evita que a primeira decisão troque o ataque por coleta de diamantes.
+  resumeOffense(engine, b, brain, time, 3.5);
 }
 
 // ---------------------------------------------------------------- update
@@ -108,10 +111,20 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
   const enemy = visibleEnemy(engine, b, cfg.vision);
   if (enemy) brain.seenEnemyAt = engine.time;
 
+  // A trava de respawn termina apenas ao cruzar a borda da ilha. Assim, uma
+  // decisão de economia nunca pode fazê-lo ficar andando entre a loja e o
+  // centro após renascer.
+  if (brain.mustLeaveHomeIsland && dist2D(b.pos, isl.center) > TUNING.islandRadius - 3) {
+    brain.mustLeaveHomeIsland = false;
+  }
+
   // ---- decisão em intervalos (performance)
   if (engine.time >= b.botDecisionAt) {
     b.botDecisionAt = engine.time + cfg.decision + Math.random() * 0.4;
-    decide(engine, b, brain, enemy);
+    const mantendoAtaque =
+      (b.botState === "ATACAR_BASE" || b.botState === "NUCLEO") &&
+      (brain.mustLeaveHomeIsland || engine.time < brain.offensiveUntil);
+    if (!mantendoAtaque) decide(engine, b, brain, enemy);
   }
 
   let moveTarget: Vec3 | null = null;
@@ -141,7 +154,7 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
           moveTarget = { x: b.pos.x * 2 - e.pos.x, y: 0, z: b.pos.z * 2 - e.pos.z };
         else moveTarget = e.pos; // aproxima/orbita — nunca fica parado atirando
         if (los && d <= w.range) shootAt = { x: e.pos.x, y: e.pos.y + 1.1, z: e.pos.z };
-      } else b.botState = "REPOSICIONAR";
+      } else resumeOffense(engine, b, brain, engine.time);
       break;
     }
     case "DEFENDER":
@@ -188,8 +201,9 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       const t = brain.targetIsland;
       const owner = t >= 0 ? engine.participants.find((p) => p.island === t) : null;
       if (!owner || owner.coreHp <= 0) {
-        brain.targetIsland = -1;
-        b.botState = "REPOSICIONAR";
+        // Se o alvo caiu, troca diretamente para outra base. Nunca volta para
+        // a própria ilha como consequência de uma troca de alvo.
+        resumeOffense(engine, b, brain, engine.time);
         break;
       }
       const core = ISLANDS[t]!.core;
@@ -208,9 +222,10 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       break;
     }
     default: {
-      // REPOSICIONAR / RETORNAR
-      moveTarget = pathStep(engine, b, brain, `home${b.island}`, ISLAND_NODES[b.island]!.centerId);
-      if (dist2D(b.pos, isl.center) < 6) b.botState = "COLETAR";
+      // Estado legado/inesperado: não há mais retorno automático para casa.
+      // Isso evita que qualquer recuperação futura recrie o isolamento.
+      resumeOffense(engine, b, brain, engine.time);
+      break;
     }
   }
 
@@ -236,11 +251,11 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
       brain.detourUntil = engine.time + 0.7 + Math.random() * 0.5;
       brain.stuckCount += 1;
       if (brain.stuckCount >= 2) {
-        // objetivo impossível: escolhe outro
+        // Uma rota inválida não pode enviar o bot de volta para casa: depois
+        // do respawn isso era o caminho que o deixava permanentemente isolado.
+        // Descarta a rota e tenta imediatamente outra base inimiga.
         brain.stuckCount = 0;
-        brain.targetIsland = -1;
-        b.botState = "REPOSICIONAR";
-        b.botDecisionAt = engine.time + 0.3;
+        resumeOffense(engine, b, brain, engine.time, 2.5);
       }
     }
   } else if (moved > 0.03) {
@@ -343,6 +358,29 @@ function chooseTargetIsland(engine: GameEngine, b: Participant) {
     }
   }
   return best;
+}
+
+/**
+ * Recomeça a navegação ofensiva sem passar pelo estado de retorno à ilha.
+ * É usado tanto no respawn quanto em alvos destruídos e em recuperação de
+ * travamento, para que a mesma falha não reapareça por caminhos diferentes.
+ */
+function resumeOffense(
+  engine: GameEngine,
+  b: Participant,
+  brain: Brain,
+  time: number,
+  lockSeconds = 1.5,
+) {
+  brain.path = [];
+  brain.pathIdx = 0;
+  brain.goalKey = "";
+  brain.repathAt = 0;
+  brain.targetIsland = chooseTargetIsland(engine, b);
+  b.botTargetId = null;
+  b.botState = brain.targetIsland >= 0 ? "ATACAR_BASE" : "COLETAR";
+  brain.offensiveUntil = brain.targetIsland >= 0 ? time + lockSeconds : time;
+  b.botDecisionAt = time + 0.15;
 }
 
 // ---------------------------------------------------------------- rota
