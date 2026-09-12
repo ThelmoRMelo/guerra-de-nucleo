@@ -12,6 +12,12 @@ import {
 import { useGame } from "@/game/store";
 import type { GameEngine } from "@/game/engine";
 
+// Munição é infinita e a recarga está desativada; estas melhorias não devem
+// aparecer como opções de compra no comerciante.
+const SHOP_UPGRADE_IDS = (Object.keys(UPGRADES) as UpgradeId[]).filter(
+  (id) => id !== "municao" && id !== "recarga",
+);
+
 export function ShopPanel({ engine }: { engine: GameEngine }) {
   const shopOpen = useGame((s) => s.shopOpen);
   const setShopOpen = useGame((s) => s.setShopOpen);
@@ -100,7 +106,7 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                 );
               })
             : tab === "melhorias"
-              ? (Object.keys(UPGRADES) as UpgradeId[]).map((id) => {
+              ? SHOP_UPGRADE_IDS.map((id) => {
                 const u = UPGRADES[id];
                 const level = hud.upgrades[id];
                 const cost = engine.upgradeCost(p, id);
