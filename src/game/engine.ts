@@ -243,7 +243,7 @@ export class GameEngine {
 
   private speedOf(p: Participant) {
     const speedBoost = p.speedBoostUntil > this.time ? p.speedBoostMultiplier : 1;
-    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.1) * speedBoost;
+    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.2) * speedBoost;
   }
 
   private updatePlayer(dt: number, input: PlayerInput) {

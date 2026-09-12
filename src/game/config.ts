@@ -104,7 +104,7 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   velocidade: {
     id: "velocidade",
     nome: "VELOCIDADE",
-    descricao: "+10% de velocidade por nível",
+    descricao: "+20% de velocidade por nível",
     maxLevel: 3,
     price: { diamond: 20 },
   },
@@ -187,10 +187,10 @@ export const SUPPLEMENTS: Record<SupplementId, SupplementDef> = {
   energetico: {
     id: "energetico",
     nome: "ENERGÉTICO",
-    descricao: "Recupera 10 de HP e dá +25% de velocidade por 12s",
+    descricao: "Recupera 10 de HP e dá +35% de velocidade por 12s",
     emoji: "⚡",
     heal: 10,
-    speedMultiplier: 1.25,
+    speedMultiplier: 1.35,
     speedDuration: 12,
     price: { diamond: 20 },
   },
