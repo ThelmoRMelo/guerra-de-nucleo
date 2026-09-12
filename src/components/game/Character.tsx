@@ -17,19 +17,17 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
   return (
     <group ref={ref}>
       <group name="body">
-        <mesh position={[0, 1.55, 0]} castShadow name="head">
-          <sphereGeometry args={[0.42, 20, 16]} />
+        <mesh position={[0, classic ? 1.55 : 1.58, 0]} castShadow name="head">
+          <sphereGeometry args={[classic ? 0.42 : 0.5, 20, 16]} />
           <meshStandardMaterial color={animal} roughness={0.7} />
         </mesh>
-        {skin === "raposa" || skin === "tigre" ? (
-          <>
-            {[-0.24, 0.24].map((x) => <mesh key={x} position={[x, 1.97, 0]}><coneGeometry args={[0.18, 0.38, 4]} /><meshStandardMaterial color={animal} /></mesh>)}
-          </>
-        ) : null}
+        {/* Cachorro: orelhas caídas; gato: orelhas triangulares altas. */}
+        {skin === "raposa" ? [-0.35, 0.35].map((x) => <mesh key={`dog-ear-${x}`} position={[x, 1.78, 0]} rotation={[0, 0, x < 0 ? 0.55 : -0.55]}><capsuleGeometry args={[0.13, 0.32, 4, 8]} /><meshStandardMaterial color="#8c542f" /></mesh>) : null}
+        {skin === "tigre" ? [-0.28, 0.28].map((x) => <mesh key={`cat-ear-${x}`} position={[x, 2.03, 0]}><coneGeometry args={[0.17, 0.36, 4]} /><meshStandardMaterial color={animal} /></mesh>) : null}
         {skin === "panda" ? <><mesh position={[-0.25, 1.86, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#222" /></mesh><mesh position={[0.25, 1.86, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#222" /></mesh></> : null}
         {/* Rosto estilizado: cada animal sempre tem exatamente dois olhos e duas pupilas. */}
         {!classic && [-0.16, 0.16].map((x) => (
-          <group key={`animal-eye-${x}`} position={[x, 1.62, -0.405]}>
+          <group key={`animal-eye-${x}`} position={[x, 1.64, -0.485]}>
             {skin === "panda" && <mesh><sphereGeometry args={[0.16, 12, 10]} /><meshStandardMaterial color="#242424" /></mesh>}
             <mesh position={[0, 0, -0.035]}><sphereGeometry args={[0.11, 12, 10]} /><meshStandardMaterial color={eyeWhite} /></mesh>
             <mesh position={[0, 0, -0.12]}><sphereGeometry args={[0.052, 12, 10]} /><meshStandardMaterial color="#12121b" /></mesh>
@@ -37,8 +35,8 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
           </group>
         ))}
         {classic && [-0.15, 0.15].map((x) => <mesh key={`classic-eye-${x}`} position={[x, 1.6, -0.405]}><sphereGeometry args={[0.07, 10, 8]} /><meshStandardMaterial color="#2b2440" /></mesh>)}
-        {skin === "coruja" ? <mesh position={[0, 1.46, -0.43]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.13, 0.32, 4]} /><meshStandardMaterial color="#f6c542" /></mesh> : null}
-        {skin === "raposa" || skin === "tigre" ? <mesh position={[0, 1.45, -0.41]}><sphereGeometry args={[0.13, 12, 8]} /><meshStandardMaterial color={skin === "raposa" ? "#2a1a18" : "#6b321d"} /></mesh> : null}
+        {skin === "coruja" ? <mesh position={[0, 1.47, -0.52]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.13, 0.32, 4]} /><meshStandardMaterial color="#f6c542" /></mesh> : null}
+        {skin === "raposa" || skin === "tigre" ? <mesh position={[0, 1.46, -0.5]}><sphereGeometry args={[0.13, 12, 8]} /><meshStandardMaterial color={skin === "raposa" ? "#2a1a18" : "#6b321d"} /></mesh> : null}
         {classic && <mesh position={[0, 1.82, 0]} castShadow>
           <sphereGeometry args={[0.44, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
           <meshStandardMaterial color={color} roughness={0.55} />
@@ -63,6 +61,9 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
           <capsuleGeometry args={[0.12, 0.4, 4, 8]} />
           <meshStandardMaterial color={classic ? "#3d3350" : bodyColor} roughness={0.75} />
         </mesh>
+        {/* Caudas simples reforçam a leitura do cachorro e gato mesmo à distância. */}
+        {skin === "raposa" ? <mesh position={[0, 0.95, 0.36]} rotation={[0.7, 0, 0]}><capsuleGeometry args={[0.12, 0.55, 4, 8]} /><meshStandardMaterial color="#8c542f" /></mesh> : null}
+        {skin === "tigre" ? <mesh position={[0, 0.92, 0.36]} rotation={[0.9, 0, 0]}><capsuleGeometry args={[0.09, 0.62, 4, 8]} /><meshStandardMaterial color={animal} /></mesh> : null}
         {/* Pelagens no corpo: o uniforme só pertence ao personagem clássico. */}
         {skin === "panda" ? <><mesh position={[-0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0, 0.72, -0.37]}><sphereGeometry args={[0.2, 12, 8]} /><meshStandardMaterial color="#202020" /></mesh></> : null}
         {skin === "raposa" ? <mesh position={[0, 0.82, -0.38]}><sphereGeometry args={[0.22, 12, 8]} /><meshStandardMaterial color="#f3dfc6" /></mesh> : null}
