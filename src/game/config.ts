@@ -182,10 +182,10 @@ export const TEAM_COLORS = [
 
 export const SKINS = [
   { id: "classico", nome: "CLÁSSICO", emoji: "🙂" },
-  { id: "raposa", nome: "RAPOSA", emoji: "🦊" },
+  { id: "raposa", nome: "CACHORRO", emoji: "🐶" },
   { id: "panda", nome: "PANDA", emoji: "🐼" },
   { id: "coruja", nome: "CORUJA", emoji: "🦉" },
-  { id: "tigre", nome: "TIGRE", emoji: "🐯" },
+  { id: "tigre", nome: "GATO", emoji: "🐱" },
 ] as const;
 
 export type SkinId = (typeof SKINS)[number]["id"];

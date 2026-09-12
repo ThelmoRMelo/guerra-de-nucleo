@@ -11,7 +11,7 @@ interface Props {
 /** Personagem cartunesco: cabeça redonda, corpo cilíndrico, braços e pernas simples. */
 export const Character = forwardRef<THREE.Group, Props>(function Character({ color, skin = "classico" }, ref) {
   const classic = skin === "classico";
-  const animal = skin === "raposa" ? "#e97831" : skin === "panda" ? "#f4f4f4" : skin === "coruja" ? "#a97142" : skin === "tigre" ? "#f2a536" : "#ffd9b3";
+  const animal = skin === "raposa" ? "#ba7a48" : skin === "panda" ? "#f4f4f4" : skin === "coruja" ? "#a97142" : skin === "tigre" ? "#a7aab2" : "#ffd9b3";
   const bodyColor = classic ? color : animal;
   const eyeWhite = skin === "coruja" ? "#ffd85a" : "#ffffff";
   return (
@@ -64,9 +64,8 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
           <meshStandardMaterial color={classic ? "#3d3350" : bodyColor} roughness={0.75} />
         </mesh>
         {/* Pelagens no corpo: o uniforme só pertence ao personagem clássico. */}
-        {skin === "tigre" ? [-0.22, 0, 0.22].map((x) => <mesh key={`tiger-body-${x}`} position={[x, 1.02, -0.37]}><boxGeometry args={[0.045, 0.62, 0.025]} /><meshStandardMaterial color="#4a2b19" /></mesh>) : null}
         {skin === "panda" ? <><mesh position={[-0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0, 0.72, -0.37]}><sphereGeometry args={[0.2, 12, 8]} /><meshStandardMaterial color="#202020" /></mesh></> : null}
-        {skin === "raposa" ? <mesh position={[0, 0.82, -0.38]}><sphereGeometry args={[0.22, 12, 8]} /><meshStandardMaterial color="#fff2dc" /></mesh> : null}
+        {skin === "raposa" ? <mesh position={[0, 0.82, -0.38]}><sphereGeometry args={[0.22, 12, 8]} /><meshStandardMaterial color="#f3dfc6" /></mesh> : null}
         {skin === "coruja" ? <>{[-0.18, 0, 0.18].map((x) => <mesh key={`owl-feather-${x}`} position={[x, 1.02, -0.37]}><sphereGeometry args={[0.1, 10, 8]} /><meshStandardMaterial color="#efd2a2" /></mesh>)}</> : null}
         {/* arma */}
         <group name="gun" position={[0.42, 1.15, -0.45]}>
