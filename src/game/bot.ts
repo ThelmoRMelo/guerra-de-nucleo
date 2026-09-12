@@ -221,6 +221,13 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
         resumeOffense(engine, b, brain, engine.time);
         break;
       }
+      // No respawn, não depende da rota completa até outra ilha para dar o
+      // primeiro passo. Sai por uma posição segura no eixo da ponte e só
+      // então retoma o pathfinding normal para o núcleo inimigo.
+      if (brain.mustLeaveHomeIsland) {
+        moveTarget = exitHomeIslandTarget(b.island);
+        break;
+      }
       const core = ISLANDS[t]!.core;
       const d = dist2D(b.pos, core);
       if (d < 18 && hasLineOfSight(b.pos, core, 3)) {
@@ -396,6 +403,14 @@ function resumeOffense(
   b.botState = brain.targetIsland >= 0 ? "ATACAR_BASE" : "COLETAR";
   brain.offensiveUntil = brain.targetIsland >= 0 ? time + lockSeconds : time;
   b.botDecisionAt = time + 0.15;
+}
+
+/** Ponto da ponte logo após a borda da ilha, livre de loja, núcleo e árvores. */
+function exitHomeIslandTarget(island: number): Vec3 {
+  const home = ISLANDS[island]!;
+  const distanceFromMapCenter = TUNING.islandDistance - TUNING.islandRadius - 1.5;
+  const scale = distanceFromMapCenter / TUNING.islandDistance;
+  return { x: home.center.x * scale, y: 0, z: home.center.z * scale };
 }
 
 // ---------------------------------------------------------------- rota
