@@ -232,7 +232,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
             style={{ pointerEvents: "none" }}
           >
             <div className="whitespace-nowrap rounded-md bg-black/55 px-2 py-0.5 text-[13px] font-bold text-white">
-              <span style={{ color: p.color }}>●</span> {p.name}{" "}
+              <span style={{ color: p.color }}>● {p.name}</span>{" "}
               <span className="opacity-80">{Math.round(p.hp)}</span>
             </div>
           </Html>
