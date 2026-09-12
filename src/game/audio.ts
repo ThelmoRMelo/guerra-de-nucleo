@@ -2,9 +2,15 @@
 
 let ctx: AudioContext | null = null;
 let volume = 0.7;
+let musicVolume = 0.4;
+let battleMusicTimer: number | null = null;
 
 export function setSfxVolume(v: number) {
   volume = v;
+}
+
+export function setMusicVolume(v: number) {
+  musicVolume = v;
 }
 
 function ensure(): AudioContext | null {
@@ -66,4 +72,43 @@ export function playSound(name: string) {
     default:
       break;
   }
+}
+
+// Tema original de batalha chiptune: não reproduz músicas de outros jogos.
+const BATTLE_MELODY = [659, 784, 880, 784, 659, 587, 659, 523, 659, 784, 988, 784, 698, 659, 587, 523];
+const BATTLE_BASS = [131, 131, 147, 147, 165, 165, 147, 147];
+
+function musicNote(c: AudioContext, when: number, freq: number, duration: number, gain: number, type: OscillatorType) {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, when);
+  g.gain.setValueAtTime(Math.max(0.0001, gain * musicVolume), when);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+  osc.connect(g).connect(c.destination);
+  osc.start(when);
+  osc.stop(when + duration + 0.03);
+}
+
+export function startBattleMusic() {
+  if (battleMusicTimer !== null) return;
+  const c = ensure();
+  if (!c) return;
+  const step = 0.19;
+  const cycle = BATTLE_MELODY.length * step;
+  const schedule = () => {
+    const start = c.currentTime + 0.06;
+    for (let i = 0; i < BATTLE_MELODY.length; i++) {
+      const when = start + i * step;
+      musicNote(c, when, BATTLE_MELODY[i]!, step * 0.72, 0.075, "square");
+      if (i % 2 === 0) musicNote(c, when, BATTLE_BASS[(i / 2) % BATTLE_BASS.length]!, step * 1.5, 0.095, "triangle");
+    }
+  };
+  schedule();
+  battleMusicTimer = window.setInterval(schedule, cycle * 1000);
+}
+
+export function stopBattleMusic() {
+  if (battleMusicTimer !== null) window.clearInterval(battleMusicTimer);
+  battleMusicTimer = null;
 }

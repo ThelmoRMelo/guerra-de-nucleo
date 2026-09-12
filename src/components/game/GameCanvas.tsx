@@ -9,7 +9,7 @@ import { EmotePanel } from "./EmotePanel";
 import { VoiceChatControl } from "./VoiceChatControl";
 import { GameEngine } from "@/game/engine";
 import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
-import { playSound, setSfxVolume } from "@/game/audio";
+import { playSound, setMusicVolume, setSfxVolume, startBattleMusic, stopBattleMusic } from "@/game/audio";
 import { useGame } from "@/game/store";
 import { getLocalPlayerId } from "@/lib/room";
 import { useMatchPositionSync } from "@/hooks/useMatchPositionSync";
@@ -25,6 +25,7 @@ export function GameCanvas() {
   const matchPlayers = useGame((s) => s.matchPlayers);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
+  const musicVolume = useGame((s) => s.musicVolume);
   const sensitivity = useGame((s) => s.sensitivity);
   const shopOpen = useGame((s) => s.shopOpen);
   const emoteOpen = useGame((s) => s.emoteOpen);
@@ -67,6 +68,11 @@ export function GameCanvas() {
   }, [engine, setEmoteOpen, setEngine, setPaused, setShopOpen]);
 
   useEffect(() => setSfxVolume(sfxVolume), [sfxVolume]);
+  useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
+  useEffect(() => {
+    startBattleMusic();
+    return () => stopBattleMusic();
+  }, []);
   useEffect(() => {
     input.sensitivity = sensitivity;
   }, [sensitivity]);
