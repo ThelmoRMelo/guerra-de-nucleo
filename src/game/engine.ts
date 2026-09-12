@@ -520,7 +520,9 @@ export class GameEngine {
       return;
     }
     const isl = ISLANDS[p.island]!;
-    p.pos = { ...isl.spawn };
+    // Bots ressurgem no ponto central livre da própria ilha. O spawn externo
+    // fica atrás da base do núcleo e, com colisão ativa, podia prendê-los.
+    p.pos = p.isBot ? { ...isl.center } : { ...isl.spawn };
     p.vel = { x: 0, y: 0, z: 0 };
     p.hp = TUNING.playerMaxHp;
     p.alive = true;

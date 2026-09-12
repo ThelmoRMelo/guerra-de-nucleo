@@ -84,10 +84,14 @@ export function resetBotAfterRespawn(b: Participant, time: number) {
   brain.lastX = b.pos.x;
   brain.lastZ = b.pos.z;
   brain.detourUntil = 0;
+  brain.strafeUntil = 0;
+  brain.seenEnemyAt = -99;
   b.botTargetId = null;
-  b.botState = "REPOSICIONAR";
-  // Força uma nova decisão no próximo frame, em vez de aguardar o intervalo antigo.
-  b.botDecisionAt = time;
+  b.moving = false;
+  // Não retorna ao estado defensivo: no próximo frame escolhe um novo alvo
+  // humano/bot/núcleo e volta à ofensiva normalmente.
+  b.botState = "COLETAR";
+  b.botDecisionAt = time - 0.01;
 }
 
 // ---------------------------------------------------------------- update
