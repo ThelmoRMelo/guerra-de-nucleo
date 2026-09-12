@@ -14,6 +14,9 @@ import type { GameEngine } from "./engine";
 export type BotPersonality = "AGRESSIVO" | "ESTRATEGICO" | "DEFENSIVO" | "EQUILIBRADO";
 export type Difficulty = "facil" | "normal" | "dificil";
 
+// Antes da 50ª morte o bot precisa obrigatoriamente retomar a ofensiva.
+const MAX_RESPAWNS_WITH_FORCED_OFFENSE = 50;
+
 interface Brain {
   personality: BotPersonality;
   path: Vec3[];
@@ -34,6 +37,8 @@ interface Brain {
   offensiveUntil: number;
   /** No respawn, só libera decisões normais depois de o bot sair da própria ilha. */
   mustLeaveHomeIsland: boolean;
+  /** Mortes com núcleo ainda ativo nesta partida. */
+  deathCount: number;
   slot: number;
 }
 
@@ -71,10 +76,17 @@ export function ensureBrain(b: Participant, index: number): Brain {
       seenEnemyAt: -99,
       offensiveUntil: 0,
       mustLeaveHomeIsland: false,
+      deathCount: 0,
       slot: index,
     };
   }
   return b.brain;
+}
+
+/** Registra uma morte que resultará em respawn, antes de o motor reiniciar o bot. */
+export function recordBotRespawnDeath(b: Participant) {
+  const brain = ensureBrain(b, b.island);
+  brain.deathCount += 1;
 }
 
 /** Reinicia a navegação e atribui imediatamente um novo alvo inimigo após respawn. */
@@ -92,12 +104,15 @@ export function resetBotAfterRespawn(engine: GameEngine, b: Participant, time: n
   brain.detourUntil = 0;
   brain.strafeUntil = 0;
   brain.seenEnemyAt = -99;
-  brain.mustLeaveHomeIsland = true;
+  // Da 1ª à 49ª morte, o bot é obrigado a deixar a ilha e voltar ao ataque.
+  // Na 50ª, a IA retorna ao comportamento normal da partida.
+  const forceOffense = brain.deathCount < MAX_RESPAWNS_WITH_FORCED_OFFENSE;
+  brain.mustLeaveHomeIsland = forceOffense;
   b.botTargetId = null;
   b.moving = false;
-  // O respawn deve sempre recomeçar pela rota ofensiva. O bloqueio temporário
-  // evita que a primeira decisão troque o ataque por coleta de diamantes.
-  resumeOffense(engine, b, brain, time, 3.5);
+  // O respawn sempre recebe um alvo; nas primeiras 49 mortes, a rota fica
+  // bloqueada em ofensiva até o bot de fato atravessar a borda da ilha.
+  resumeOffense(engine, b, brain, time, forceOffense ? 3.5 : 0);
 }
 
 // ---------------------------------------------------------------- update
@@ -114,7 +129,7 @@ export function updateBot(engine: GameEngine, b: Participant, dt: number) {
   // A trava de respawn termina apenas ao cruzar a borda da ilha. Assim, uma
   // decisão de economia nunca pode fazê-lo ficar andando entre a loja e o
   // centro após renascer.
-  if (brain.mustLeaveHomeIsland && dist2D(b.pos, isl.center) > TUNING.islandRadius - 3) {
+  if (brain.mustLeaveHomeIsland && dist2D(b.pos, isl.center) > TUNING.islandRadius + 0.6) {
     brain.mustLeaveHomeIsland = false;
   }
 

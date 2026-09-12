@@ -11,7 +11,13 @@ import {
 import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
 import { OBSTACLES } from "./nav";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
-import { ensureBrain, resetBotAfterRespawn, updateBot, type Difficulty } from "./bot";
+import {
+  ensureBrain,
+  recordBotRespawnDeath,
+  resetBotAfterRespawn,
+  updateBot,
+  type Difficulty,
+} from "./bot";
 
 let uid = 1;
 const nextId = () => uid++;
@@ -512,6 +518,9 @@ export class GameEngine {
         `☠ ${target.name} FOI ELIMINADO${from ? ` por ${from.name}` : reason ? ` (${reason})` : ""}`,
       );
     } else {
+      // A contagem só considera mortes que realmente terão respawn. Ela mantém
+      // a retomada ofensiva obrigatória nas primeiras 49 mortes do bot.
+      if (target.isBot) recordBotRespawnDeath(target);
       target.respawnAt = this.time + TUNING.respawnTime;
       this.pushEvent(
         `${from ? `${from.name} eliminou ` : ""}${target.name}${from ? "" : " morreu"}`,
