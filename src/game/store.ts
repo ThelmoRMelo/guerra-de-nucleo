@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { GameEngine } from "./engine";
 import type { UpgradeId, WeaponId } from "./config";
-import { TEAM_COLORS } from "./config";
+import { TEAM_COLORS, type SkinId } from "./config";
 
 export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
 export type BotDifficulty = "facil" | "normal" | "dificil";
@@ -44,6 +44,7 @@ interface GameStore {
   screen: Screen;
   playerName: string;
   teamColor: string;
+  playerSkin: SkinId;
   botDifficulty: BotDifficulty;
   coreRestorationEnabled: boolean;
   fillEmptySlotsWithBots: boolean;
@@ -66,6 +67,7 @@ interface GameStore {
   setScreen: (s: Screen) => void;
   setName: (n: string) => void;
   setTeamColor: (color: string) => void;
+  setPlayerSkin: (skin: SkinId) => void;
   setBotDifficulty: (difficulty: BotDifficulty) => void;
   setCoreRestorationEnabled: (enabled: boolean) => void;
   setFillEmptySlotsWithBots: (enabled: boolean) => void;
@@ -84,6 +86,7 @@ export const useGame = create<GameStore>((set) => ({
   screen: "menu",
   playerName: "Player" + Math.floor(100 + Math.random() * 900),
   teamColor: TEAM_COLORS[0]!,
+  playerSkin: "classico",
   botDifficulty: "normal",
   coreRestorationEnabled: true,
   fillEmptySlotsWithBots: true,
@@ -124,6 +127,7 @@ export const useGame = create<GameStore>((set) => ({
     set({ playerName });
   },
   setTeamColor: (teamColor) => set({ teamColor }),
+  setPlayerSkin: (playerSkin) => set({ playerSkin }),
   setBotDifficulty: (botDifficulty) => set({ botDifficulty }),
   setCoreRestorationEnabled: (coreRestorationEnabled) => set({ coreRestorationEnabled }),
   setFillEmptySlotsWithBots: (fillEmptySlotsWithBots) => set({ fillEmptySlotsWithBots }),

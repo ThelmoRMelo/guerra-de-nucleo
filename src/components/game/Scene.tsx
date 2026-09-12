@@ -213,6 +213,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
         <group key={p.id}>
           <Character
             color={p.color}
+            skin={p.skin}
             ref={(el) => {
               groupRefs.current[i] = el;
             }}

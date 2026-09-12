@@ -18,6 +18,7 @@ export function GameCanvas() {
   const wrapper = useRef<HTMLDivElement>(null);
   const playerName = useGame((s) => s.playerName);
   const teamColor = useGame((s) => s.teamColor);
+  const playerSkin = useGame((s) => s.playerSkin);
   const botDifficulty = useGame((s) => s.botDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
   const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
@@ -47,6 +48,7 @@ export function GameCanvas() {
       coreRestorationEnabled,
       fillEmptySlotsWithBots,
       localPlayerId,
+      playerSkin,
     );
     e.onSound = playSound;
     return e;

@@ -1,20 +1,30 @@
 import { forwardRef } from "react";
 import * as THREE from "three";
+import type { SkinId } from "@/game/config";
 
 interface Props {
   color: string;
+  skin?: SkinId;
   hidden?: boolean;
 }
 
 /** Personagem cartunesco: cabeça redonda, corpo cilíndrico, braços e pernas simples. */
-export const Character = forwardRef<THREE.Group, Props>(function Character({ color }, ref) {
+export const Character = forwardRef<THREE.Group, Props>(function Character({ color, skin = "classico" }, ref) {
+  const animal = skin === "raposa" ? "#e97831" : skin === "panda" ? "#f4f4f4" : skin === "coruja" ? "#a97142" : skin === "tigre" ? "#f2a536" : "#ffd9b3";
   return (
     <group ref={ref}>
       <group name="body">
         <mesh position={[0, 1.55, 0]} castShadow name="head">
           <sphereGeometry args={[0.42, 20, 16]} />
-          <meshStandardMaterial color="#ffd9b3" roughness={0.7} />
+          <meshStandardMaterial color={animal} roughness={0.7} />
         </mesh>
+        {skin === "raposa" || skin === "tigre" ? (
+          <>
+            {[-0.24, 0.24].map((x) => <mesh key={x} position={[x, 1.97, 0]}><coneGeometry args={[0.18, 0.38, 4]} /><meshStandardMaterial color={animal} /></mesh>)}
+          </>
+        ) : null}
+        {skin === "panda" ? <><mesh position={[-0.25, 1.86, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#222" /></mesh><mesh position={[0.25, 1.86, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#222" /></mesh></> : null}
+        {skin === "coruja" ? <mesh position={[0, 1.52, -0.4]}><coneGeometry args={[0.13, 0.3, 4]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#f6c542" /></mesh> : null}
         {/* olhos */}
         <mesh position={[0.15, 1.6, -0.36]}>
           <sphereGeometry args={[0.07, 10, 8]} />
@@ -24,6 +34,7 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
           <sphereGeometry args={[0.07, 10, 8]} />
           <meshStandardMaterial color="#2b2440" />
         </mesh>
+        {skin === "tigre" ? [-0.18, 0, 0.18].map((x) => <mesh key={x} position={[x, 1.72, -0.38]}><boxGeometry args={[0.045, 0.28, 0.02]} /><meshStandardMaterial color="#4a2b19" /></mesh>) : null}
         <mesh position={[0, 1.82, 0]} castShadow>
           <sphereGeometry args={[0.44, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
           <meshStandardMaterial color={color} roughness={0.55} />

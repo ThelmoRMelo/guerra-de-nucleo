@@ -1,6 +1,7 @@
 import {
   BOT_NAMES,
   TEAM_COLORS,
+  type SkinId,
   TUNING,
   UPGRADES,
   WEAPONS,
@@ -38,6 +39,7 @@ export interface HumanMatchParticipant {
   playerId: string;
   name: string;
   color: string;
+  skin?: SkinId;
 }
 
 export interface RemotePlayerState {
@@ -78,13 +80,14 @@ export class GameEngine {
     coreRestorationEnabled = true,
     fillEmptySlotsWithBots = true,
     localNetworkPlayerId = "",
+    playerSkin: SkinId = "classico",
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
     const localColor = TEAM_COLORS.includes(playerColor) ? playerColor : TEAM_COLORS[0]!;
     // O servidor já garante cores únicas. O motor preserva as cores recebidas e
     // nunca troca silenciosamente a cor de outro humano.
-    const humans: HumanMatchParticipant[] = [{ playerId: localNetworkPlayerId, name: playerName, color: localColor }];
+    const humans: HumanMatchParticipant[] = [{ playerId: localNetworkPlayerId, name: playerName, color: localColor, skin: playerSkin }];
     for (const human of otherHumans) {
       if (TEAM_COLORS.includes(human.color) && !humans.some((p) => p.color === human.color)) humans.push(human);
     }
@@ -100,6 +103,7 @@ export class GameEngine {
           human ? humans[i]!.name : botNames[i % botNames.length]!,
           !human,
           island,
+          human ? humans[i]!.skin ?? "classico" : (["raposa", "panda", "coruja", "tigre"] as SkinId[])[i % 4]!,
         );
       if (human) participant.networkPlayerId = humans[i]!.playerId;
       this.participants.push(participant);
@@ -108,7 +112,7 @@ export class GameEngine {
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);
   }
 
-  private makeParticipant(id: string, name: string, isBot: boolean, island: number): Participant {
+  private makeParticipant(id: string, name: string, isBot: boolean, island: number, skin: SkinId): Participant {
     const isl = ISLANDS[island]!;
     return {
       id,
@@ -116,6 +120,7 @@ export class GameEngine {
       isBot,
       island,
       color: TEAM_COLORS[island]!,
+      skin,
       hp: TUNING.playerMaxHp,
       alive: true,
       eliminated: false,

@@ -180,6 +180,16 @@ export const TEAM_COLORS = [
   "#f2f5ff",
 ];
 
+export const SKINS = [
+  { id: "classico", nome: "CLÁSSICO", emoji: "🙂" },
+  { id: "raposa", nome: "RAPOSA", emoji: "🦊" },
+  { id: "panda", nome: "PANDA", emoji: "🐼" },
+  { id: "coruja", nome: "CORUJA", emoji: "🦉" },
+  { id: "tigre", nome: "TIGRE", emoji: "🐯" },
+] as const;
+
+export type SkinId = (typeof SKINS)[number]["id"];
+
 export const BOT_NAMES = [
   "Tigre",
   "Kira",

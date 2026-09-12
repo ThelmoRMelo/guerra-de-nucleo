@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TEAM_COLORS } from "@/game/config";
+import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
 import {
@@ -21,6 +21,8 @@ export function Menu() {
   const setName = useGame((s) => s.setName);
   const teamColor = useGame((s) => s.teamColor);
   const setTeamColor = useGame((s) => s.setTeamColor);
+  const playerSkin = useGame((s) => s.playerSkin);
+  const setPlayerSkin = useGame((s) => s.setPlayerSkin);
   const botDifficulty = useGame((s) => s.botDifficulty);
   const setBotDifficulty = useGame((s) => s.setBotDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
@@ -222,6 +224,26 @@ export function Menu() {
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Se um bot já usa esta cor, ele recebe a sua cor anterior.
               </p>
+            </div>
+            <div className="mt-3 rounded-xl bg-card/70 p-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Skin do personagem</p>
+              <div className="mt-3 grid grid-cols-5 gap-1.5">
+                {SKINS.map((skin) => (
+                  <button
+                    key={skin.id}
+                    type="button"
+                    title={skin.nome}
+                    onClick={() => setPlayerSkin(skin.id)}
+                    className={`rounded-lg px-1 py-2 text-lg transition-colors ${
+                      playerSkin === skin.id ? "bg-primary ring-2 ring-accent" : "bg-muted hover:bg-muted/70"
+                    }`}
+                  >
+                    <span className="block">{skin.emoji}</span>
+                    <span className="mt-1 block text-[8px] font-black">{skin.nome}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">Skins prontas: cabeça redonda e corpo cilíndrico são preservados.</p>
             </div>
             <div className="mt-3 rounded-xl bg-card/70 p-3">
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">

@@ -1,4 +1,4 @@
-import type { UpgradeId, WeaponId } from "./config";
+import type { SkinId, UpgradeId, WeaponId } from "./config";
 
 export interface Vec3 {
   x: number;
@@ -27,6 +27,7 @@ export interface Participant {
   isBot: boolean;
   island: number;
   color: string;
+  skin: SkinId;
   hp: number;
   alive: boolean;
   eliminated: boolean;
