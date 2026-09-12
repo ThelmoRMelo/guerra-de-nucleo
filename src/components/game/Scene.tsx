@@ -227,11 +227,11 @@ export function Scene({ engine }: { engine: GameEngine }) {
             key={`n${p.id}`}
             position={[p.pos.x, p.pos.y + 2.35, p.pos.z]}
             center
-            distanceFactor={9}
+            distanceFactor={13}
             zIndexRange={[10, 0]}
             style={{ pointerEvents: "none" }}
           >
-            <div className="whitespace-nowrap rounded-md bg-black/55 px-2 py-0.5 text-[13px] font-bold text-white">
+            <div className="whitespace-nowrap rounded-lg border border-white/20 bg-black/75 px-3 py-1 text-[16px] font-black text-white shadow-lg sm:text-[18px]">
               <span style={{ color: p.color }}>● {p.name}</span>{" "}
               <span className="opacity-80">{Math.round(p.hp)}</span>
             </div>
