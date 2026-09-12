@@ -42,14 +42,12 @@ export function Scene({ engine }: { engine: GameEngine }) {
     const aimPlayer = engine.player;
     const behindX = Math.sin(input.yaw);
     const behindZ = Math.cos(input.yaw);
-    const leftX = -Math.cos(input.yaw);
-    const leftZ = Math.sin(input.yaw);
-    const rightX = -leftX;
-    const rightZ = -leftZ;
+    const rightX = Math.cos(input.yaw);
+    const rightZ = -Math.sin(input.yaw);
     camPos.set(
-      aimPlayer.pos.x + behindX * 7.5 + leftX * 2.2,
+      aimPlayer.pos.x + behindX * 7.5 + rightX * 2.2,
       aimPlayer.pos.y + 3.4 - input.pitch * 4,
-      aimPlayer.pos.z + behindZ * 7.5 + leftZ * 2.2,
+      aimPlayer.pos.z + behindZ * 7.5 + rightZ * 2.2,
     );
     lookAt.set(
       aimPlayer.pos.x - behindX * 6 + rightX * 1.1,
@@ -165,9 +163,9 @@ export function Scene({ engine }: { engine: GameEngine }) {
     const dist = 7.5;
     const height = 3.4 - input.pitch * 4;
     camPos.set(
-      pl.pos.x + behindX * dist + leftX * 2.2,
+      pl.pos.x + behindX * dist + rightX * 2.2,
       pl.pos.y + height,
-      pl.pos.z + behindZ * dist + leftZ * 2.2,
+      pl.pos.z + behindZ * dist + rightZ * 2.2,
     );
     camera.position.lerp(camPos, 1 - Math.exp(-14 * dt));
     lookAt.set(
