@@ -13,7 +13,6 @@ import { OBSTACLES } from "./nav";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
 import {
   ensureBrain,
-  recordBotRespawnDeath,
   resetBotAfterRespawn,
   updateBot,
   type Difficulty,
@@ -372,7 +371,14 @@ export class GameEngine {
           y: origin.y + dir.y * w.range,
           z: origin.z + dir.z * w.range,
         };
-    this.tracers.push({ id: nextId(), from: origin, to: end, born: this.time, color: p.color });
+    this.tracers.push({
+      id: nextId(),
+      from: origin,
+      to: end,
+      born: this.time,
+      color: p.color,
+      fromLocalPlayer: p.id === this.playerId,
+    });
     if (!hit) return;
     if (hit.kind === "player") {
       this.damagePlayer(hit.target as Participant, w.damage, p);
@@ -518,9 +524,6 @@ export class GameEngine {
         `☠ ${target.name} FOI ELIMINADO${from ? ` por ${from.name}` : reason ? ` (${reason})` : ""}`,
       );
     } else {
-      // A contagem só considera mortes que realmente terão respawn. Ela mantém
-      // a retomada ofensiva obrigatória nas primeiras 49 mortes do bot.
-      if (target.isBot) recordBotRespawnDeath(target);
       target.respawnAt = this.time + TUNING.respawnTime;
       this.pushEvent(
         `${from ? `${from.name} eliminou ` : ""}${target.name}${from ? "" : " morreu"}`,
@@ -648,7 +651,9 @@ export class GameEngine {
   // ---------------------------------------------------------------- fim
 
   private cleanup() {
-    this.tracers = this.tracers.filter((t) => this.time - t.born < 0.09);
+    this.tracers = this.tracers.filter(
+      (t) => this.time - t.born < (t.fromLocalPlayer ? 0.16 : 0.09),
+    );
     this.hits = this.hits.filter((h) => this.time - h.born < 0.35);
     this.events = this.events.filter((e) => this.time - e.born < 5);
   }

@@ -75,6 +75,8 @@ export interface Tracer {
   to: Vec3;
   born: number;
   color: string;
+  /** Rastro disparado pelo personagem controlado neste cliente. */
+  fromLocalPlayer: boolean;
 }
 
 export interface Hit {

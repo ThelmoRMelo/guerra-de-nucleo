@@ -40,15 +40,21 @@ export function Scene({ engine }: { engine: GameEngine }) {
     const dt = Math.min(rawDelta, 0.05);
     const blocked = shopOpen || paused || engine.status !== "running";
     const aimPlayer = engine.player;
+    const behindX = Math.sin(input.yaw);
+    const behindZ = Math.cos(input.yaw);
+    const leftX = -Math.cos(input.yaw);
+    const leftZ = Math.sin(input.yaw);
+    const rightX = -leftX;
+    const rightZ = -leftZ;
     camPos.set(
-      aimPlayer.pos.x + Math.sin(input.yaw) * 7.5,
+      aimPlayer.pos.x + behindX * 7.5 + leftX * 2.2,
       aimPlayer.pos.y + 3.4 - input.pitch * 4,
-      aimPlayer.pos.z + Math.cos(input.yaw) * 7.5,
+      aimPlayer.pos.z + behindZ * 7.5 + leftZ * 2.2,
     );
     lookAt.set(
-      aimPlayer.pos.x - Math.sin(input.yaw) * 6,
+      aimPlayer.pos.x - behindX * 6 + rightX * 1.1,
       aimPlayer.pos.y + 1.6 + input.pitch * 7,
-      aimPlayer.pos.z - Math.cos(input.yaw) * 6,
+      aimPlayer.pos.z - behindZ * 6 + rightZ * 1.1,
     );
     aimDirection.subVectors(lookAt, camPos).normalize();
     aimPoint.copy(camPos).addScaledVector(aimDirection, 160);
@@ -135,9 +141,10 @@ export function Scene({ engine }: { engine: GameEngine }) {
       const len = from.distanceTo(to);
       m.visible = true;
       m.position.copy(from).lerp(to, 0.5);
-      m.scale.set(1, 1, Math.max(0.2, len));
+      const localShotScale = t.fromLocalPlayer ? 2.4 : 1;
+      m.scale.set(localShotScale, localShotScale, Math.max(0.2, len));
       m.lookAt(to);
-      (m.material as THREE.MeshBasicMaterial).color.set(t.color);
+      (m.material as THREE.MeshBasicMaterial).color.set(t.fromLocalPlayer ? "#fff3a0" : t.color);
     }
 
     // pickups (atualiza a lista em baixa frequência)
@@ -158,15 +165,15 @@ export function Scene({ engine }: { engine: GameEngine }) {
     const dist = 7.5;
     const height = 3.4 - input.pitch * 4;
     camPos.set(
-      pl.pos.x + Math.sin(input.yaw) * dist,
+      pl.pos.x + behindX * dist + leftX * 2.2,
       pl.pos.y + height,
-      pl.pos.z + Math.cos(input.yaw) * dist,
+      pl.pos.z + behindZ * dist + leftZ * 2.2,
     );
     camera.position.lerp(camPos, 1 - Math.exp(-14 * dt));
     lookAt.set(
-      pl.pos.x - Math.sin(input.yaw) * 6,
+      pl.pos.x - behindX * 6 + rightX * 1.1,
       pl.pos.y + 1.6 + input.pitch * 7,
-      pl.pos.z - Math.cos(input.yaw) * 6,
+      pl.pos.z - behindZ * 6 + rightZ * 1.1,
     );
     camera.lookAt(lookAt);
 
