@@ -6,6 +6,7 @@ import { HUD } from "./HUD";
 import { TouchControls } from "./TouchControls";
 import { ShopPanel } from "./ShopPanel";
 import { EmotePanel } from "./EmotePanel";
+import { VoiceChatControl } from "./VoiceChatControl";
 import { GameEngine } from "@/game/engine";
 import { attachDesktopInput, input, resetInput, setUiMode } from "@/game/input";
 import { playSound, setSfxVolume } from "@/game/audio";
@@ -121,6 +122,7 @@ export function GameCanvas() {
         <Scene engine={engine} />
       </Canvas>
       <HUD engine={engine} />
+      <VoiceChatControl />
       <TouchControls />
       <ShopPanel engine={engine} />
       <EmotePanel engine={engine} />
