@@ -29,12 +29,12 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
         {skin === "coruja" ? <mesh position={[0, 1.52, -0.4]}><coneGeometry args={[0.13, 0.3, 4]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#f6c542" /></mesh> : null}
         {/* Olhos grandes dos animais; o clássico preserva o rosto original. */}
         {!classic ? [0.15, -0.15].map((x) => <mesh key={`eye-base-${x}`} position={[x, 1.6, -0.37]}><sphereGeometry args={[0.115, 12, 10]} /><meshStandardMaterial color="#fff" /></mesh>) : null}
-        {/* olhos */}
-        <mesh position={[0.15, 1.6, -0.36]}>
+        {/* olhos e íris */}
+        <mesh position={[0.15, 1.6, -0.405]}>
           <sphereGeometry args={[0.07, 10, 8]} />
           <meshStandardMaterial color="#2b2440" />
         </mesh>
-        <mesh position={[-0.15, 1.6, -0.36]}>
+        <mesh position={[-0.15, 1.6, -0.405]}>
           <sphereGeometry args={[0.07, 10, 8]} />
           <meshStandardMaterial color="#2b2440" />
         </mesh>
@@ -63,6 +63,11 @@ export const Character = forwardRef<THREE.Group, Props>(function Character({ col
           <capsuleGeometry args={[0.12, 0.4, 4, 8]} />
           <meshStandardMaterial color={classic ? "#3d3350" : bodyColor} roughness={0.75} />
         </mesh>
+        {/* Pelagens no corpo: o uniforme só pertence ao personagem clássico. */}
+        {skin === "tigre" ? [-0.22, 0, 0.22].map((x) => <mesh key={`tiger-body-${x}`} position={[x, 1.02, -0.37]}><boxGeometry args={[0.045, 0.62, 0.025]} /><meshStandardMaterial color="#4a2b19" /></mesh>) : null}
+        {skin === "panda" ? <><mesh position={[-0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0.36, 1.05, 0]}><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0, 0.72, -0.37]}><sphereGeometry args={[0.2, 12, 8]} /><meshStandardMaterial color="#202020" /></mesh></> : null}
+        {skin === "raposa" ? <mesh position={[0, 0.82, -0.38]}><sphereGeometry args={[0.22, 12, 8]} /><meshStandardMaterial color="#fff2dc" /></mesh> : null}
+        {skin === "coruja" ? <>{[-0.18, 0, 0.18].map((x) => <mesh key={`owl-feather-${x}`} position={[x, 1.02, -0.37]}><sphereGeometry args={[0.1, 10, 8]} /><meshStandardMaterial color="#efd2a2" /></mesh>)}</> : null}
         {skin === "panda" ? <><mesh position={[-0.23, 1.58, -0.39]}><sphereGeometry args={[0.14, 12, 10]} /><meshStandardMaterial color="#202020" /></mesh><mesh position={[0.23, 1.58, -0.39]}><sphereGeometry args={[0.14, 12, 10]} /><meshStandardMaterial color="#202020" /></mesh></> : null}
         {skin === "raposa" ? <mesh position={[0, 1.47, -0.42]}><sphereGeometry args={[0.15, 12, 8]} /><meshStandardMaterial color="#fff2dc" /></mesh> : null}
         {/* arma */}
