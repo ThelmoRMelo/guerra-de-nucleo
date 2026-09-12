@@ -72,6 +72,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
         pitch: input.pitch,
         aimYaw,
         aimPitch,
+        aimTarget: { x: aimPoint.x, y: aimPoint.y, z: aimPoint.z },
         shooting: input.shooting,
         reload,
       });
@@ -83,6 +84,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
         pitch: input.pitch,
         aimYaw,
         aimPitch,
+        aimTarget: { x: aimPoint.x, y: aimPoint.y, z: aimPoint.z },
         shooting: false,
         reload: false,
       });

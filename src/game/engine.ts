@@ -34,6 +34,8 @@ export interface PlayerInput {
   /** Direção calculada a partir do centro da câmera (campo de mira). */
   aimYaw: number;
   aimPitch: number;
+  /** Ponto projetado pelo auxiliar de mira no centro da câmera. */
+  aimTarget: Vec3;
   shooting: boolean;
   reload: boolean;
 }
@@ -262,7 +264,7 @@ export class GameEngine {
     this.moveEntity(p, dx, dz, dt);
 
     if (input.reload) this.startReload(p);
-    if (input.shooting) this.tryShoot(p, input.aimYaw, input.aimPitch);
+    if (input.shooting) this.tryShoot(p, input.aimYaw, input.aimPitch, input.aimTarget);
   }
 
   moveEntity(p: Participant, dx: number, dz: number, dt: number) {
@@ -330,7 +332,7 @@ export class GameEngine {
     // Munição infinita: recarga desativada.
   }
 
-  tryShoot(p: Participant, yaw: number, pitch: number) {
+  tryShoot(p: Participant, yaw: number, pitch: number, aimTarget?: Vec3) {
     if (!p.alive || this.time < p.nextShotAt || p.burstLeft > 0) return;
     if (p.protectedUntil > this.time && !p.isBot) {
       // proteção de spawn impede causar dano — sai da proteção ao atirar
@@ -339,6 +341,8 @@ export class GameEngine {
     const w = WEAPONS[p.weapon];
     p.aimYaw = yaw;
     p.aimPitch = pitch;
+    if (aimTarget) p.aimTarget = { ...aimTarget };
+    else delete p.aimTarget;
     p.nextShotAt = this.time + w.cooldown;
     p.ammo = this.magazineOf(p);
     p.reloadUntil = 0;
@@ -355,8 +359,20 @@ export class GameEngine {
   private fireOnce(p: Participant, yaw: number, pitch: number) {
     const w = WEAPONS[p.weapon];
     const spread = w.spread + (p.isBot ? 0.03 : 0);
-    const y = yaw + (Math.random() - 0.5) * spread * 12;
-    const pi = pitch + (Math.random() - 0.5) * spread * 6;
+    let aimYaw = yaw;
+    let aimPitch = pitch;
+    // O disparo nasce no personagem, mas aponta para o mesmo ponto distante
+    // indicado pelo raio da mira da câmera. Isso elimina o desvio causado
+    // pela câmera no ombro direito/esquerdo.
+    if (p.aimTarget) {
+      const dx = p.aimTarget.x - p.pos.x;
+      const dz = p.aimTarget.z - p.pos.z;
+      const horizontalDistance = Math.hypot(dx, dz);
+      aimYaw = Math.atan2(-dx, -dz);
+      aimPitch = Math.atan2(p.aimTarget.y - (p.pos.y + 1.4), horizontalDistance);
+    }
+    const y = aimYaw + (Math.random() - 0.5) * spread * 12;
+    const pi = aimPitch + (Math.random() - 0.5) * spread * 6;
     const dir = {
       x: -Math.sin(y) * Math.cos(pi),
       y: Math.sin(pi),
@@ -701,6 +717,7 @@ declare module "./types" {
   interface Participant {
     aimYaw?: number;
     aimPitch?: number;
+    aimTarget?: Vec3;
   }
 }
 
