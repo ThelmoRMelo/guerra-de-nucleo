@@ -10,7 +10,7 @@ export function VoiceChatControl() {
   if (!roomCode || matchPlayers.length < 2) return null;
 
   return (
-    <div className="pointer-events-auto absolute left-3 top-28 z-20 hidden md:block">
+    <div className="pointer-events-auto absolute left-3 top-40 z-20 hidden md:block">
       <button
         type="button"
         onClick={toggle}
