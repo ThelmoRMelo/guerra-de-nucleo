@@ -79,6 +79,10 @@ export function ensureBrain(b: Participant, index: number): Brain {
 
 /** Reinicia a navegação e atribui imediatamente um novo alvo inimigo após respawn. */
 export function resetBotAfterRespawn(engine: GameEngine, b: Participant, time: number) {
+  // A derrota não pode carregar caminho, desvio, alvo ou temporizador da vida
+  // anterior. Reconstruir o cérebro inteiro garante o mesmo reinício para
+  // todos os bots, inclusive quando vários renascem na mesma partida.
+  delete b.brain;
   const brain = ensureBrain(b, b.island);
   brain.path = [];
   brain.pathIdx = 0;
