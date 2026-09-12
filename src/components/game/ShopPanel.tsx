@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { TUNING, UPGRADES, WEAPONS, type UpgradeId, type WeaponId } from "@/game/config";
+import {
+  SUPPLEMENTS,
+  TUNING,
+  UPGRADES,
+  WEAPONS,
+  type SupplementId,
+  type UpgradeId,
+  type WeaponId,
+} from "@/game/config";
 import { useGame } from "@/game/store";
 import type { GameEngine } from "@/game/engine";
 
@@ -9,7 +17,7 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
   const setShopOpen = useGame((s) => s.setShopOpen);
   const hud = useGame((s) => s.hud);
   const [msg, setMsg] = useState("");
-  const [tab, setTab] = useState<"armas" | "melhorias">("armas");
+  const [tab, setTab] = useState<"armas" | "melhorias" | "suplementos">("armas");
 
   if (!shopOpen || !hud) return null;
   const p = engine.player;
@@ -41,7 +49,7 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
         </div>
 
         <div className="mb-3 flex gap-2">
-          {(["armas", "melhorias"] as const).map((t) => (
+          {(["armas", "melhorias", "suplementos"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -91,7 +99,8 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                   </div>
                 );
               })
-            : (Object.keys(UPGRADES) as UpgradeId[]).map((id) => {
+            : tab === "melhorias"
+              ? (Object.keys(UPGRADES) as UpgradeId[]).map((id) => {
                 const u = UPGRADES[id];
                 const level = hud.upgrades[id];
                 const cost = engine.upgradeCost(p, id);
@@ -118,7 +127,37 @@ export function ShopPanel({ engine }: { engine: GameEngine }) {
                     </button>
                   </div>
                 );
-              })}
+                })
+              : (Object.keys(SUPPLEMENTS) as SupplementId[]).map((id) => {
+                  const supplement = SUPPLEMENTS[id];
+                  const healthFull = hud.hp >= TUNING.playerMaxHp;
+                  const usableAtFullHealth = supplement.speedDuration !== undefined;
+                  return (
+                    <div
+                      key={id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl" aria-hidden>{supplement.emoji}</span>
+                        <div>
+                          <p className="font-bold">
+                            {supplement.emoji} {supplement.nome}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{supplement.descricao}</p>
+                        </div>
+                      </div>
+                      <button
+                        className="btn-arcade-sm"
+                        disabled={healthFull && !usableAtFullHealth}
+                        onClick={() => {
+                          if (!engine.buySupplement(p, id)) fail();
+                        }}
+                      >
+                        {healthFull && !usableAtFullHealth ? "VIDA CHEIA" : `${supplement.price.diamond}💎`}
+                      </button>
+                    </div>
+                  );
+                })}
           {tab === "melhorias" && engine.coreRestorationEnabled && !p.isBot && hud.coreHp <= 0 && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/50 bg-accent/10 p-3">
               <div>

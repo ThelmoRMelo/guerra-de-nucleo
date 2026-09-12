@@ -54,6 +54,9 @@ export interface Participant {
   nextRegenAt: number;
   respawnAt: number;
   protectedUntil: number;
+  /** Bônus temporário de velocidade recebido por suplemento. */
+  speedBoostUntil: number;
+  speedBoostMultiplier: number;
   kills: number;
   emote: string | null;
   emoteUntil: number;

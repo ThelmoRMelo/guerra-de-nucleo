@@ -145,6 +145,57 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   },
 };
 
+export type SupplementId = "coxinha" | "bandagem" | "kit_medico" | "energetico";
+
+export interface SupplementDef {
+  id: SupplementId;
+  nome: string;
+  descricao: string;
+  emoji: string;
+  heal: number;
+  speedMultiplier?: number;
+  speedDuration?: number;
+  price: { diamond: number };
+}
+
+/** Consumíveis de uso imediato, disponíveis em qualquer comerciante. */
+export const SUPPLEMENTS: Record<SupplementId, SupplementDef> = {
+  coxinha: {
+    id: "coxinha",
+    nome: "COXINHA DE GALINHA",
+    descricao: "Recupera 15 de vida",
+    emoji: "🍗",
+    heal: 15,
+    price: { diamond: 15 },
+  },
+  bandagem: {
+    id: "bandagem",
+    nome: "BANDAGEM",
+    descricao: "Recupera 30 de HP",
+    emoji: "🩹",
+    heal: 30,
+    price: { diamond: 25 },
+  },
+  kit_medico: {
+    id: "kit_medico",
+    nome: "KIT MÉDICO",
+    descricao: "Recupera 60 de HP",
+    emoji: "🧰",
+    heal: 60,
+    price: { diamond: 45 },
+  },
+  energetico: {
+    id: "energetico",
+    nome: "ENERGÉTICO",
+    descricao: "Recupera 10 de HP e dá +25% de velocidade por 12s",
+    emoji: "⚡",
+    heal: 10,
+    speedMultiplier: 1.25,
+    speedDuration: 12,
+    price: { diamond: 20 },
+  },
+};
+
 export const TUNING = {
   playerMaxHp: 100,
   coreMaxHp: 100,

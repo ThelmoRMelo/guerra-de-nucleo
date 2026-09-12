@@ -5,8 +5,10 @@ import {
   TUNING,
   UPGRADES,
   WEAPONS,
+  SUPPLEMENTS,
   type UpgradeId,
   type WeaponId,
+  type SupplementId,
 } from "./config";
 import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
 import { OBSTACLES } from "./nav";
@@ -151,6 +153,8 @@ export class GameEngine {
       nextRegenAt: 0,
       respawnAt: 0,
       protectedUntil: TUNING.spawnProtection,
+      speedBoostUntil: 0,
+      speedBoostMultiplier: 1,
       kills: 0,
       emote: null,
       emoteUntil: 0,
@@ -238,7 +242,8 @@ export class GameEngine {
   }
 
   private speedOf(p: Participant) {
-    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.1);
+    const speedBoost = p.speedBoostUntil > this.time ? p.speedBoostMultiplier : 1;
+    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.1) * speedBoost;
   }
 
   private updatePlayer(dt: number, input: PlayerInput) {
@@ -560,6 +565,8 @@ export class GameEngine {
     p.hp = TUNING.playerMaxHp;
     p.alive = true;
     p.protectedUntil = this.time + TUNING.spawnProtection;
+    p.speedBoostUntil = 0;
+    p.speedBoostMultiplier = 1;
     p.ammo = this.magazineOf(p);
     p.reloadUntil = 0;
     p.burstLeft = 0;
@@ -649,6 +656,25 @@ export class GameEngine {
     const u = UPGRADES[id];
     const level = p.upgrades[id];
     return { diamond: u.price.diamond * (level + 1) };
+  }
+
+  canBuySupplement(p: Participant, id: SupplementId) {
+    const supplement = SUPPLEMENTS[id];
+    const canUseEffect = p.hp < TUNING.playerMaxHp || supplement.speedDuration !== undefined;
+    return p.alive && !p.eliminated && canUseEffect && p.diamond >= supplement.price.diamond;
+  }
+
+  buySupplement(p: Participant, id: SupplementId): boolean {
+    if (!this.canBuySupplement(p, id)) return false;
+    const supplement = SUPPLEMENTS[id];
+    p.diamond -= supplement.price.diamond;
+    p.hp = Math.min(TUNING.playerMaxHp, p.hp + supplement.heal);
+    if (supplement.speedDuration) {
+      p.speedBoostUntil = this.time + supplement.speedDuration;
+      p.speedBoostMultiplier = supplement.speedMultiplier ?? 1;
+    }
+    if (p.id === this.playerId) this.onSound?.("buy");
+    return true;
   }
 
   equip(p: Participant, id: WeaponId) {
