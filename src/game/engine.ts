@@ -530,7 +530,7 @@ export class GameEngine {
     p.ammo = this.magazineOf(p);
     p.reloadUntil = 0;
     p.burstLeft = 0;
-    if (p.isBot) resetBotAfterRespawn(p, this.time);
+    if (p.isBot) resetBotAfterRespawn(this, p, this.time);
     if (p.id === this.playerId) this.onSound?.("respawn");
   }
 

@@ -71,8 +71,8 @@ export function ensureBrain(b: Participant, index: number): Brain {
   return b.brain;
 }
 
-/** Limpa somente o estado transitório de navegação após respawn; preserva o progresso do bot. */
-export function resetBotAfterRespawn(b: Participant, time: number) {
+/** Reinicia a navegação e atribui imediatamente um novo alvo inimigo após respawn. */
+export function resetBotAfterRespawn(engine: GameEngine, b: Participant, time: number) {
   const brain = ensureBrain(b, b.island);
   brain.path = [];
   brain.pathIdx = 0;
@@ -88,10 +88,13 @@ export function resetBotAfterRespawn(b: Participant, time: number) {
   brain.seenEnemyAt = -99;
   b.botTargetId = null;
   b.moving = false;
-  // Não retorna ao estado defensivo: no próximo frame escolhe um novo alvo
-  // humano/bot/núcleo e volta à ofensiva normalmente.
-  b.botState = "COLETAR";
-  b.botDecisionAt = time - 0.01;
+  // Evita a rotina de coleta/retorno após morrer: ela era a responsável por
+  // deixar bots presos na própria ilha. O bot sai já com um núcleo inimigo alvo.
+  const targetIsland = chooseTargetIsland(engine, b);
+  brain.targetIsland = targetIsland;
+  b.botState = targetIsland >= 0 ? "ATACAR_BASE" : "COLETAR";
+  // Mantém o alvo por tempo suficiente para iniciar a rota ofensiva.
+  b.botDecisionAt = time + 0.8;
 }
 
 // ---------------------------------------------------------------- update
