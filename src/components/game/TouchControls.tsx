@@ -10,7 +10,10 @@ export function TouchControls() {
   const padRef = useRef<HTMLDivElement>(null);
   const moveId = useRef<number | null>(null);
   const lookId = useRef<number | null>(null);
+  /** O mesmo dedo do disparo pode arrastar a câmera. */
+  const fireLookId = useRef<number | null>(null);
   const lastLook = useRef({ x: 0, y: 0 });
+  const lastFireLook = useRef({ x: 0, y: 0 });
 
   const hud = useGame((s) => s.hud);
   const setShopOpen = useGame((s) => s.setShopOpen);
@@ -68,6 +71,14 @@ export function TouchControls() {
         };
       }
 
+      if (e.pointerId === fireLookId.current) {
+        addLook(
+          e.clientX - lastFireLook.current.x,
+          e.clientY - lastFireLook.current.y,
+        );
+        lastFireLook.current = { x: e.clientX, y: e.clientY };
+      }
+
       if (e.pointerId === moveId.current) {
         updateJoystick(e.clientX, e.clientY);
       }
@@ -87,6 +98,11 @@ export function TouchControls() {
 
       if (e.pointerId === lookId.current) {
         lookId.current = null;
+      }
+
+      if (e.pointerId === fireLookId.current) {
+        fireLookId.current = null;
+        input.shooting = false;
       }
     };
 
@@ -197,14 +213,22 @@ export function TouchControls() {
 
         <button
           className="flex h-24 w-24 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground shadow-xl active:scale-95"
-          onPointerDown={() => {
+          style={{ touchAction: "none" }}
+          onPointerDown={(e) => {
             input.shooting = true;
+            fireLookId.current = e.pointerId;
+            lastFireLook.current = { x: e.clientX, y: e.clientY };
+            e.currentTarget.setPointerCapture?.(e.pointerId);
           }}
-          onPointerUp={() => {
+          onPointerUp={(e) => {
             input.shooting = false;
+            if (fireLookId.current === e.pointerId) fireLookId.current = null;
           }}
-          onPointerLeave={() => {
-            input.shooting = false;
+          onPointerCancel={(e) => {
+            if (fireLookId.current === e.pointerId) {
+              fireLookId.current = null;
+              input.shooting = false;
+            }
           }}
           aria-label="Atirar"
         >
