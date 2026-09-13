@@ -4,6 +4,7 @@ import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
 import {
   createRoom,
+  fetchRoom,
   fetchRoomPlayers,
   getLocalPlayerId,
   joinRoom,
@@ -29,6 +30,8 @@ export function Menu() {
   const setCoreRestorationEnabled = useGame((s) => s.setCoreRestorationEnabled);
   const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
   const setFillEmptySlotsWithBots = useGame((s) => s.setFillEmptySlotsWithBots);
+  const teamMode = useGame((s) => s.teamMode);
+  const setTeamMode = useGame((s) => s.setTeamMode);
   const isRoomHost = useGame((s) => s.isRoomHost);
   const setIsRoomHost = useGame((s) => s.setIsRoomHost);
   const roomCode = useGame((s) => s.roomCode);
@@ -61,6 +64,7 @@ export function Menu() {
   const [joinCode, setJoinCode] = useState("");
   const [joinColor, setJoinColor] = useState<string | null>(null);
   const [joinOccupiedColors, setJoinOccupiedColors] = useState<string[]>([]);
+  const [joinTeamMode, setJoinTeamMode] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [busy, setBusy] = useState(false);
   const [lobbyError, setLobbyError] = useState("");
@@ -88,9 +92,10 @@ export function Menu() {
       setJoinOccupiedColors([]);
       return;
     }
-    void fetchRoomPlayers(code).then((roomPlayers) => {
+    void Promise.all([fetchRoomPlayers(code), fetchRoom(code)]).then(([roomPlayers, room]) => {
+      setJoinTeamMode(Boolean(room?.team_mode));
       setJoinOccupiedColors(
-        roomPlayers.filter((player) => player.player_id !== getLocalPlayerId()).map((player) => player.color),
+        TEAM_COLORS.filter((color) => roomPlayers.filter((player) => player.player_id !== getLocalPlayerId() && player.color === color).length >= (room?.team_mode ? 2 : 1)),
       );
     });
   }, [joinCode]);
@@ -145,12 +150,14 @@ export function Menu() {
     botDifficulty?: typeof botDifficulty;
     fillWithBots?: boolean;
     coreRestoration?: boolean;
+    teamMode?: boolean;
   }) => {
     if (!isRoomHost || !roomCode) return;
     void updateRoomSettings(roomCode, getLocalPlayerId(), {
       botDifficulty: next.botDifficulty ?? botDifficulty,
       fillWithBots: next.fillWithBots ?? fillEmptySlotsWithBots,
       coreRestoration: next.coreRestoration ?? coreRestorationEnabled,
+      teamMode: next.teamMode ?? teamMode,
     });
   };
 
@@ -176,12 +183,12 @@ export function Menu() {
   };
 
   const humanCount = players.length;
-  const slots = fillEmptySlotsWithBots ? 8 : Math.max(humanCount, 1);
-  const occupiedColors = new Set(players.map((player) => player.color));
+  const slots = fillEmptySlotsWithBots ? (teamMode ? 16 : 8) : Math.max(humanCount, 1);
+  const colorUse = (color: string) => players.filter((player) => player.color === color).length;
   const myPlayerId = getLocalPlayerId();
 
   const changeLobbyColor = async (color: string) => {
-    if (isRoomHost || room?.status !== "lobby" || color === teamColor) return;
+    if (room?.status !== "lobby" || color === teamColor) return;
     setBusy(true);
     const res = await updateRoomPlayerColor(roomCode, myPlayerId, color);
     setBusy(false);
@@ -382,15 +389,15 @@ export function Menu() {
               </p>
             )}
 
-            {!isRoomHost && (
+            {(
               <div className="mt-4 rounded-xl bg-muted/60 p-3">
                 <p className="text-sm font-black">SUA COR DE EQUIPE</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Escolha uma cor livre antes de a partida começar.
+                  {teamMode ? "Cada cor comporta até dois aliados." : "Escolha uma cor livre antes de a partida começar."}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {TEAM_COLORS.map((color) => {
-                    const occupiedByOther = occupiedColors.has(color) && color !== teamColor;
+                    const occupiedByOther = colorUse(color) >= (teamMode ? 2 : 1) && color !== teamColor;
                     const selected = color === teamColor;
                     return (
                       <button
@@ -411,6 +418,22 @@ export function Menu() {
             )}
 
             <div className="mt-4 rounded-xl bg-muted/60 p-3">
+              <p className="text-sm font-black">MODO DE JOGO</p>
+              {isRoomHost ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">Equipe permite duas pessoas por cor e até 16 participantes.</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {[false, true].map((enabled) => (
+                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={() => { setTeamMode(enabled); pushSettings({ teamMode: enabled }); }}>
+                        {enabled ? "EQUIPES (2)" : "INDIVIDUAL"}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : <p className="mt-1 text-xs text-muted-foreground">{teamMode ? "EQUIPES DE 2" : "INDIVIDUAL"}</p>}
+            </div>
+
+            <div className="mt-3 rounded-xl bg-muted/60 p-3">
               <p className="text-sm font-black">RESTAURAÇÃO DE NÚCLEO</p>
               {isRoomHost ? (
                 <>
@@ -626,7 +649,7 @@ export function Menu() {
             placeholder="A7K92X"
           />
           <p className="mt-4 text-sm font-black">ESCOLHA SUA COR</p>
-          <p className="mt-1 text-xs text-muted-foreground">Cores ocupadas na sala ficam bloqueadas.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{joinTeamMode ? "Cada cor aceita até duas pessoas." : "Cores ocupadas na sala ficam bloqueadas."}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {TEAM_COLORS.map((color) => {
               const occupied = joinOccupiedColors.includes(color);

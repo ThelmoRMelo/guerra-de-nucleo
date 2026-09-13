@@ -57,6 +57,7 @@ interface GameStore {
   botDifficulty: BotDifficulty;
   coreRestorationEnabled: boolean;
   fillEmptySlotsWithBots: boolean;
+  teamMode: boolean;
   isRoomHost: boolean;
   roomCode: string;
   shopOpen: boolean;
@@ -86,6 +87,7 @@ interface GameStore {
   setBotDifficulty: (difficulty: BotDifficulty) => void;
   setCoreRestorationEnabled: (enabled: boolean) => void;
   setFillEmptySlotsWithBots: (enabled: boolean) => void;
+  setTeamMode: (enabled: boolean) => void;
   setIsRoomHost: (isHost: boolean) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
@@ -111,6 +113,7 @@ export const useGame = create<GameStore>((set) => ({
   botDifficulty: "normal",
   coreRestorationEnabled: true,
   fillEmptySlotsWithBots: true,
+  teamMode: false,
   isRoomHost: true,
   roomCode: "",
   shopOpen: false,
@@ -158,6 +161,7 @@ export const useGame = create<GameStore>((set) => ({
   setBotDifficulty: (botDifficulty) => set({ botDifficulty }),
   setCoreRestorationEnabled: (coreRestorationEnabled) => set({ coreRestorationEnabled }),
   setFillEmptySlotsWithBots: (fillEmptySlotsWithBots) => set({ fillEmptySlotsWithBots }),
+  setTeamMode: (teamMode) => set({ teamMode }),
   setIsRoomHost: (isRoomHost) => set({ isRoomHost }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),

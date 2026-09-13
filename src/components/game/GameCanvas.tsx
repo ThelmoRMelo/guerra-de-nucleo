@@ -22,6 +22,7 @@ export function GameCanvas() {
   const botDifficulty = useGame((s) => s.botDifficulty);
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
   const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
+  const teamMode = useGame((s) => s.teamMode);
   const matchPlayers = useGame((s) => s.matchPlayers);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
@@ -54,6 +55,7 @@ export function GameCanvas() {
       fillEmptySlotsWithBots,
       localPlayerId,
       playerSkin,
+      teamMode,
       godMode,
       coreShieldMode,
       infiniteDiamondsMode,

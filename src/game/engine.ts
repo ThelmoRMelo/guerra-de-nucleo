@@ -93,6 +93,7 @@ export class GameEngine {
     fillEmptySlotsWithBots = true,
     localNetworkPlayerId = "",
     playerSkin: SkinId = "classico",
+    teamMode = false,
     godMode = false,
     coreShieldMode = false,
     infiniteDiamondsMode = false,
@@ -104,13 +105,13 @@ export class GameEngine {
     // O servidor já garante cores únicas. O motor preserva as cores recebidas e
     // nunca troca silenciosamente a cor de outro humano.
     const humans: HumanMatchParticipant[] = [{ playerId: localNetworkPlayerId, name: playerName, color: localColor, skin: playerSkin }];
-    for (const human of otherHumans) {
-      if (TEAM_COLORS.includes(human.color) && !humans.some((p) => p.color === human.color)) humans.push(human);
-    }
+    for (const human of otherHumans) if (TEAM_COLORS.includes(human.color)) humans.push(human);
     const humanIslands = humans.map((human) => TEAM_COLORS.indexOf(human.color));
-    const botIslands = TEAM_COLORS.map((_, island) => island).filter((island) => !humanIslands.includes(island));
+    const botIslands = teamMode
+      ? TEAM_COLORS.flatMap((_, island) => Array.from({ length: Math.max(0, 2 - humanIslands.filter((value) => value === island).length) }, () => island))
+      : TEAM_COLORS.map((_, island) => island).filter((island) => !humanIslands.includes(island));
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
-    const participantCount = fillEmptySlotsWithBots ? 8 : humans.length;
+    const participantCount = fillEmptySlotsWithBots ? (teamMode ? 16 : 8) : humans.length;
     for (let i = 0; i < participantCount; i++) {
       const human = i < humans.length;
       const island = human ? humanIslands[i]! : botIslands[i - humans.length]!;
@@ -234,7 +235,8 @@ export class GameEngine {
   applyNetworkCoreDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
     const owner = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
     if (!owner || owner.coreShieldMode || owner.coreHp <= 0) return;
-    owner.coreHp = Math.max(0, owner.coreHp - amount);
+    const nextCoreHp = Math.max(0, owner.coreHp - amount);
+    for (const teammate of this.participants) if (teammate.island === owner.island) teammate.coreHp = nextCoreHp;
     if (owner.coreHp <= 0) {
       this.onSound?.("core");
       this.pushEvent(`💥 NÚCLEO DE ${owner.name.toUpperCase()} DESTRUÍDO!`);
@@ -490,11 +492,11 @@ export class GameEngine {
       };
     };
     for (const o of this.participants) {
-      if (o.id !== shooter.id && o.alive && !o.eliminated && o.protectedUntil < this.time) {
+      if (o.id !== shooter.id && o.island !== shooter.island && o.alive && !o.eliminated && o.protectedUntil < this.time) {
         const d = raySphere(origin, dir, { x: o.pos.x, y: o.pos.y + 1.1, z: o.pos.z }, 1.0);
         if (d !== null) consider(d, "player", o);
       }
-      if (o.id !== shooter.id && !o.coreShieldMode && o.coreHp > 0) {
+      if (o.id !== shooter.id && o.island !== shooter.island && !o.coreShieldMode && o.coreHp > 0) {
         const core = ISLANDS[o.island]!.core;
         const d = raySphere(origin, dir, { x: core.x, y: 1.5, z: core.z }, 1.7);
         if (d !== null) consider(d, "core", o);
@@ -577,7 +579,9 @@ export class GameEngine {
 
   damageCore(owner: Participant, amount: number, from: Participant) {
     if (owner.coreShieldMode || owner.coreHp <= 0) return;
-    owner.coreHp = Math.max(0, owner.coreHp - amount);
+    const nextCoreHp = Math.max(0, owner.coreHp - amount);
+    // Aliados compartilham a mesma base e, portanto, o mesmo núcleo.
+    for (const teammate of this.participants) if (teammate.island === owner.island) teammate.coreHp = nextCoreHp;
     if (
       from.id === this.playerId &&
       !owner.isBot &&
@@ -761,14 +765,14 @@ export class GameEngine {
   }
 
   private checkMatchEnd() {
-    const alive = this.participants.filter((p) => !p.eliminated);
-    if (alive.length <= 1) {
-      const winner = alive[0];
-      this.status = winner && winner.id === this.playerId ? "victory" : "defeat";
+    const aliveTeams = new Set(this.participants.filter((p) => !p.eliminated).map((p) => p.island));
+    if (aliveTeams.size <= 1) {
+      const winnerIsland = [...aliveTeams][0];
+      this.status = winnerIsland === this.player.island ? "victory" : "defeat";
       this.onSound?.(this.status === "victory" ? "victory" : "defeat");
       return;
     }
-    if (this.player.eliminated) this.status = "defeat";
+    if (this.participants.filter((p) => p.island === this.player.island).every((p) => p.eliminated)) this.status = "defeat";
   }
 
   nearShop(p: Participant) {

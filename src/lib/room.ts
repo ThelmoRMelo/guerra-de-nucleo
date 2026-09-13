@@ -8,6 +8,7 @@ export interface RoomRow {
   bot_difficulty: BotDifficulty;
   fill_with_bots: boolean;
   core_restoration: boolean;
+  team_mode: boolean;
   max_players: number;
   started_at: string | null;
 }
@@ -112,7 +113,7 @@ export function updateRoomPlayerColor(code: string, playerId: string, color: str
 export function updateRoomSettings(
   code: string,
   hostId: string,
-  settings: { botDifficulty: BotDifficulty; fillWithBots: boolean; coreRestoration: boolean },
+  settings: { botDifficulty: BotDifficulty; fillWithBots: boolean; coreRestoration: boolean; teamMode: boolean },
 ) {
   return callRpc("update_room_settings", {
     p_code: code,
@@ -120,6 +121,7 @@ export function updateRoomSettings(
     p_bot_difficulty: settings.botDifficulty,
     p_fill_with_bots: settings.fillWithBots,
     p_core_restoration: settings.coreRestoration,
+    p_team_mode: settings.teamMode,
   });
 }
 

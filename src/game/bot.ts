@@ -598,7 +598,7 @@ function visibleEnemy(engine: GameEngine, b: Participant, vision: number) {
   let best: Participant | null = null;
   let bd = vision;
   for (const p of engine.participants) {
-    if (p.id === b.id || !p.alive || p.eliminated || p.protectedUntil > engine.time) continue;
+    if (p.id === b.id || p.island === b.island || !p.alive || p.eliminated || p.protectedUntil > engine.time) continue;
     const d = dist2D(b.pos, p.pos);
     if (d < bd && hasLineOfSight(b.pos, p.pos)) {
       bd = d;
@@ -612,7 +612,7 @@ function nearestEnemyAny(engine: GameEngine, b: Participant, range: number) {
   let best: Participant | null = null;
   let bd = range;
   for (const p of engine.participants) {
-    if (p.id === b.id || !p.alive || p.eliminated) continue;
+    if (p.id === b.id || p.island === b.island || !p.alive || p.eliminated) continue;
     const d = dist2D(b.pos, p.pos);
     if (d < bd) {
       bd = d;

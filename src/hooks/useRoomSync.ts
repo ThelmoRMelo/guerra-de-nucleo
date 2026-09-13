@@ -30,6 +30,7 @@ export function useRoomSync(code: string, active: boolean) {
           botDifficulty: r.bot_difficulty,
           fillEmptySlotsWithBots: r.fill_with_bots,
           coreRestorationEnabled: r.core_restoration,
+          teamMode: r.team_mode,
         });
       }
       if (r.status === "closed") {
