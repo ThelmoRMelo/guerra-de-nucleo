@@ -163,28 +163,286 @@ function PirateShip() {
     const r = 19 + (i % 2) * 7;
     return [Math.cos(a) * r, Math.sin(a) * r] as const;
   });
+
+  const wallMaterial = (
+    <meshStandardMaterial color="#2e160d" roughness={0.9} />
+  );
+
+  const woodMaterial = (
+    <meshStandardMaterial color="#5b321b" roughness={0.9} />
+  );
+
+  /*
+   * O navio possui 8 entradas:
+   *
+   * Norte:  NW / N / NE
+   * Sul:    SW / S / SE
+   * Leste:  E
+   * Oeste:  W
+   *
+   * As posições foram calculadas para coincidir com as 8 pontes radiais
+   * criadas acima.
+   */
+
+  const doorWidth = 6;
+  const wallHeight = 4;
+  const wallThickness = 1.2;
+
+  // Parede norte/sul: três portas em cada lado.
+  const northSouthSegments = [
+    { x: -31, width: 8 },
+    { x: -25.5, width: 3 },
+    { x: -17.5, width: 7 },
+    { x: -10, width: 5 },
+    { x: 10, width: 5 },
+    { x: 17.5, width: 7 },
+    { x: 25.5, width: 3 },
+    { x: 31, width: 8 },
+  ];
+
+  // Parede leste/oeste: uma porta central em cada lado.
+  const eastWestSegments = [
+    { z: -13.5, depth: 15 },
+    { z: 13.5, depth: 15 },
+  ];
+
   return (
     <group>
-      <group>
-        {/* O convés é enorme e aberto no meio: as pontes chegam diretamente ao interior. */}
-        <mesh position={[0, -0.5, 0]} receiveShadow castShadow><boxGeometry args={[70, 1, 42]} /><meshStandardMaterial color="#5b321b" roughness={0.9} /></mesh>
-        <mesh position={[0, 1.8, -21]} castShadow><boxGeometry args={[70, 4, 1.2]} /><meshStandardMaterial color="#2e160d" /></mesh>
-        <mesh position={[0, 1.8, 21]} castShadow><boxGeometry args={[70, 4, 1.2]} /><meshStandardMaterial color="#2e160d" /></mesh>
-        <mesh position={[-35, 2.2, 0]} castShadow><boxGeometry args={[1.2, 4.8, 18]} /><meshStandardMaterial color="#3b1d10" /></mesh>
-        <mesh position={[35, 2.2, 0]} castShadow><boxGeometry args={[1.2, 4.8, 18]} /><meshStandardMaterial color="#3b1d10" /></mesh>
-        <mesh position={[0, 7, 0]} castShadow><cylinderGeometry args={[0.55, 0.7, 15, 10]} /><meshStandardMaterial color="#4a260f" /></mesh>
-        <mesh position={[6, 8.5, 0]} rotation={[0, 0, Math.PI / 2]}><planeGeometry args={[14, 13]} /><meshStandardMaterial color="#d8c29a" /></mesh>
-        <mesh position={[-6, 7.8, 0]} rotation={[0, 0, -Math.PI / 2]}><planeGeometry args={[12, 11]} /><meshStandardMaterial color="#b93232" /></mesh>
-        <mesh position={[0, 1.6, 0]}><octahedronGeometry args={[1.1, 0]} /><meshStandardMaterial color="#7ff0ff" emissive="#3fd8ef" emissiveIntensity={0.8} /></mesh>
-      </group>
-      {skulls.map(([x, z], i) => (
-        <group key={i} position={[x, 0.8, z]} rotation={[0, i * 0.6, 0]}>
-          <mesh castShadow><sphereGeometry args={[0.65, 12, 8]} /><meshStandardMaterial color="#ded6bd" /></mesh>
-          <mesh position={[-0.22, 0.05, -0.55]}><sphereGeometry args={[0.12, 8, 6]} /><meshStandardMaterial color="#16120e" /></mesh>
-          <mesh position={[0.22, 0.05, -0.55]}><sphereGeometry args={[0.12, 8, 6]} /><meshStandardMaterial color="#16120e" /></mesh>
+      {/* Convés */}
+      <mesh position={[0, -0.5, 0]} receiveShadow castShadow>
+        <boxGeometry args={[70, 1, 42]} />
+        {woodMaterial}
+      </mesh>
+
+      {/* ========================= */}
+      {/* PAREDES NORTE E SUL */}
+      {/* ========================= */}
+
+      {northSouthSegments.map((segment, i) => (
+        <group key={`ns-${i}`}>
+          <mesh
+            position={[
+              segment.x,
+              1.8,
+              -21,
+            ]}
+            castShadow
+          >
+            <boxGeometry
+              args={[
+                segment.width,
+                wallHeight,
+                wallThickness,
+              ]}
+            />
+            {wallMaterial}
+          </mesh>
+
+          <mesh
+            position={[
+              segment.x,
+              1.8,
+              21,
+            ]}
+            castShadow
+          >
+            <boxGeometry
+              args={[
+                segment.width,
+                wallHeight,
+                wallThickness,
+              ]}
+            />
+            {wallMaterial}
+          </mesh>
         </group>
       ))}
-      {skulls.slice(0, 6).map(([x, z], i) => <mesh key={`rock-${i}`} position={[x * 0.8, 0.6, z * 0.8]} rotation={[0.2, i, 0.1]} castShadow><dodecahedronGeometry args={[1.15, 0]} /><meshStandardMaterial color="#716052" roughness={1} /></mesh>)}
+
+      {/* ========================= */}
+      {/* PAREDES LESTE E OESTE */}
+      {/* ========================= */}
+
+      {eastWestSegments.map((segment, i) => (
+        <group key={`ew-${i}`}>
+          <mesh
+            position={[
+              -35,
+              2.2,
+              segment.z,
+            ]}
+            castShadow
+          >
+            <boxGeometry
+              args={[
+                wallThickness,
+                4.8,
+                segment.depth,
+              ]}
+            />
+            {wallMaterial}
+          </mesh>
+
+          <mesh
+            position={[
+              35,
+              2.2,
+              segment.z,
+            ]}
+            castShadow
+          >
+            <boxGeometry
+              args={[
+                wallThickness,
+                4.8,
+                segment.depth,
+              ]}
+            />
+            {wallMaterial}
+          </mesh>
+        </group>
+      ))}
+
+      {/* ========================= */}
+      {/* MOLDURAS DAS 8 PORTAS */}
+      {/* ========================= */}
+
+      {[
+        [-21, -21, 0],
+        [0, -21, 0],
+        [21, -21, 0],
+
+        [-21, 21, Math.PI],
+        [0, 21, Math.PI],
+        [21, 21, Math.PI],
+
+        [-35, 0, Math.PI / 2],
+        [35, 0, -Math.PI / 2],
+      ].map(([x, z, rotation], i) => (
+        <group
+          key={`door-${i}`}
+          position={[x, 0, z]}
+          rotation={[0, rotation, 0]}
+        >
+          {/* Pilar esquerdo */}
+          <mesh
+            position={[-doorWidth / 2, 2.2, 0]}
+            castShadow
+          >
+            <boxGeometry args={[0.8, 4.8, 1.5]} />
+            {wallMaterial}
+          </mesh>
+
+          {/* Pilar direito */}
+          <mesh
+            position={[doorWidth / 2, 2.2, 0]}
+            castShadow
+          >
+            <boxGeometry args={[0.8, 4.8, 1.5]} />
+            {wallMaterial}
+          </mesh>
+
+          {/* Parte superior */}
+          <mesh
+            position={[0, 4.6, 0]}
+            castShadow
+          >
+            <boxGeometry args={[doorWidth + 1.6, 0.8, 1.5]} />
+            {wallMaterial}
+          </mesh>
+
+          {/* Tochas laterais */}
+          <mesh
+            position={[-doorWidth / 2 - 0.7, 2.8, 0]}
+            castShadow
+          >
+            <sphereGeometry args={[0.35, 8, 8]} />
+            <meshStandardMaterial
+              color="#ff9d32"
+              emissive="#ff5a00"
+              emissiveIntensity={1.5}
+            />
+          </mesh>
+
+          <mesh
+            position={[doorWidth / 2 + 0.7, 2.8, 0]}
+            castShadow
+          >
+            <sphereGeometry args={[0.35, 8, 8]} />
+            <meshStandardMaterial
+              color="#ff9d32"
+              emissive="#ff5a00"
+              emissiveIntensity={1.5}
+            />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ========================= */}
+      {/* MASTRO */}
+      {/* ========================= */}
+
+      <mesh position={[0, 7, 0]} castShadow>
+        <cylinderGeometry args={[0.55, 0.7, 15, 10]} />
+        <meshStandardMaterial color="#4a260f" />
+      </mesh>
+
+      {/* VELA */}
+      <mesh
+        position={[6, 8.5, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+      >
+        <planeGeometry args={[14, 13]} />
+        <meshStandardMaterial color="#d8c29a" />
+      </mesh>
+
+      {/* VELA VERMELHA */}
+      <mesh
+        position={[-6, 7.8, 0]}
+        rotation={[0, 0, -Math.PI / 2]}
+      >
+        <planeGeometry args={[12, 11]} />
+        <meshStandardMaterial color="#b93232" />
+      </mesh>
+
+      {/* NÚCLEO CENTRAL */}
+      <mesh position={[0, 1.6, 0]}>
+        <octahedronGeometry args={[1.1, 0]} />
+        <meshStandardMaterial
+          color="#7ff0ff"
+          emissive="#3fd8ef"
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+
+      {/* ========================= */}
+      {/* CAVEIRAS */}
+      {/* ========================= */}
+
+      {skulls.map(([x, z], i) => (
+        <group
+          key={`skull-${i}`}
+          position={[x, 0.7, z]}
+        >
+          <mesh castShadow>
+            <sphereGeometry args={[0.65, 10, 8]} />
+            <meshStandardMaterial color="#e8dfc8" />
+          </mesh>
+
+          <mesh
+            position={[-0.22, 0.05, 0.55]}
+          >
+            <sphereGeometry args={[0.12, 8, 8]} />
+            <meshStandardMaterial color="#15100c" />
+          </mesh>
+
+          <mesh
+            position={[0.22, 0.05, 0.55]}
+          >
+            <sphereGeometry args={[0.12, 8, 8]} />
+            <meshStandardMaterial color="#15100c" />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
