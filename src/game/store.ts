@@ -6,6 +6,7 @@ import { TEAM_COLORS, type SkinId } from "./config";
 export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
 export type BotDifficulty = "facil" | "normal" | "dificil";
 export type GraphicsQuality = "ultra" | "baixa" | "media" | "alta";
+export type ArenaMap = "nucleo" | "pirata";
 
 const defaultGraphicsQuality: GraphicsQuality = (() => {
   if (typeof navigator === "undefined") return "media";
@@ -58,6 +59,7 @@ interface GameStore {
   coreRestorationEnabled: boolean;
   fillEmptySlotsWithBots: boolean;
   teamMode: boolean;
+  selectedMap: ArenaMap;
   isRoomHost: boolean;
   roomCode: string;
   shopOpen: boolean;
@@ -88,6 +90,7 @@ interface GameStore {
   setCoreRestorationEnabled: (enabled: boolean) => void;
   setFillEmptySlotsWithBots: (enabled: boolean) => void;
   setTeamMode: (enabled: boolean) => void;
+  setSelectedMap: (map: ArenaMap) => void;
   setIsRoomHost: (isHost: boolean) => void;
   setRoomCode: (c: string) => void;
   setShopOpen: (v: boolean) => void;
@@ -114,6 +117,7 @@ export const useGame = create<GameStore>((set) => ({
   coreRestorationEnabled: true,
   fillEmptySlotsWithBots: true,
   teamMode: false,
+  selectedMap: "nucleo",
   isRoomHost: true,
   roomCode: "",
   shopOpen: false,
@@ -162,6 +166,7 @@ export const useGame = create<GameStore>((set) => ({
   setCoreRestorationEnabled: (coreRestorationEnabled) => set({ coreRestorationEnabled }),
   setFillEmptySlotsWithBots: (fillEmptySlotsWithBots) => set({ fillEmptySlotsWithBots }),
   setTeamMode: (teamMode) => set({ teamMode }),
+  setSelectedMap: (selectedMap) => set({ selectedMap }),
   setIsRoomHost: (isRoomHost) => set({ isRoomHost }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setShopOpen: (shopOpen) => set({ shopOpen }),

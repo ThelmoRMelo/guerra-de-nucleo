@@ -23,6 +23,7 @@ export function GameCanvas() {
   const coreRestorationEnabled = useGame((s) => s.coreRestorationEnabled);
   const fillEmptySlotsWithBots = useGame((s) => s.fillEmptySlotsWithBots);
   const teamMode = useGame((s) => s.teamMode);
+  const selectedMap = useGame((s) => s.selectedMap);
   const matchPlayers = useGame((s) => s.matchPlayers);
   const quality = useGame((s) => s.quality);
   const sfxVolume = useGame((s) => s.sfxVolume);
@@ -56,6 +57,7 @@ export function GameCanvas() {
       localPlayerId,
       playerSkin,
       teamMode,
+      selectedMap,
       godMode,
       coreShieldMode,
       infiniteDiamondsMode,
@@ -140,7 +142,7 @@ export function GameCanvas() {
             <Lightformer intensity={0.7} color="#8fd0ff" position={[-14, 3, -6]} rotation-y={Math.PI / 2} scale={[30, 6, 1]} />
           </Environment>
         )}
-        <Scene engine={engine} />
+        <Scene engine={engine} selectedMap={selectedMap} />
       </Canvas>
       <HUD engine={engine} />
       <VoiceChatControl />

@@ -10,7 +10,8 @@ import {
   type WeaponId,
   type SupplementId,
 } from "./config";
-import { CENTER_GEN, ISLANDS, dist2D, isOnGround } from "./world";
+import { CENTER_GEN, ISLANDS, PIRATE_OBSTACLES, dist2D, isOnGround } from "./world";
+import type { ArenaMap } from "./store";
 import { OBSTACLES } from "./nav";
 import type { GameEvent, Hit, Participant, Pickup, Tracer, Vec3 } from "./types";
 import {
@@ -94,6 +95,7 @@ export class GameEngine {
     localNetworkPlayerId = "",
     playerSkin: SkinId = "classico",
     teamMode = false,
+    selectedMap: ArenaMap = "nucleo",
     godMode = false,
     coreShieldMode = false,
     infiniteDiamondsMode = false,
@@ -101,6 +103,7 @@ export class GameEngine {
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
+    this.selectedMap = selectedMap;
     const localColor = TEAM_COLORS.includes(playerColor) ? playerColor : TEAM_COLORS[0]!;
     // O servidor já garante cores únicas. O motor preserva as cores recebidas e
     // nunca troca silenciosamente a cor de outro humano.
@@ -182,6 +185,9 @@ export class GameEngine {
   get player(): Participant {
     return this.participants.find((p) => p.id === this.playerId)!;
   }
+
+  private selectedMap: ArenaMap = "nucleo";
+  private obstacles() { return this.selectedMap === "pirata" ? [...OBSTACLES, ...PIRATE_OBSTACLES] : OBSTACLES; }
 
   /** Ativa somente os poderes escolhidos antes de a partida começar. */
   enableSuperPlayer(powers: {
@@ -550,7 +556,7 @@ export class GameEngine {
     // A borda de cada ilha, ponte e plataforma central é uma barreira invisível.
     // Nunca aceitamos um passo fora do chão jogável, evitando quedas no vazio.
     if (!isOnGround(x, z)) return false;
-    return !OBSTACLES.some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.r + CHARACTER_COLLISION_RADIUS);
+    return !this.obstacles().some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.r + CHARACTER_COLLISION_RADIUS);
   }
 
   /** Recupera com segurança entidades que estavam fora da arena antes da barreira existir. */
@@ -565,7 +571,7 @@ export class GameEngine {
   /** Expulsa com suavidade personagens que já estavam dentro de um prop ao carregar a correção. */
   private resolveObstacleOverlap(p: Participant) {
     if (p.pos.y < -0.01) return;
-    for (const obstacle of OBSTACLES) {
+    for (const obstacle of this.obstacles()) {
       const dx = p.pos.x - obstacle.x;
       const dz = p.pos.z - obstacle.z;
       const distance = Math.hypot(dx, dz);

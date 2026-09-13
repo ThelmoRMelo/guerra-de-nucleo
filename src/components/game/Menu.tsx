@@ -33,6 +33,8 @@ export function Menu() {
   const setFillEmptySlotsWithBots = useGame((s) => s.setFillEmptySlotsWithBots);
   const teamMode = useGame((s) => s.teamMode);
   const setTeamMode = useGame((s) => s.setTeamMode);
+  const selectedMap = useGame((s) => s.selectedMap);
+  const setSelectedMap = useGame((s) => s.setSelectedMap);
   const isRoomHost = useGame((s) => s.isRoomHost);
   const setIsRoomHost = useGame((s) => s.setIsRoomHost);
   const roomCode = useGame((s) => s.roomCode);
@@ -72,6 +74,7 @@ export function Menu() {
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [superPlayerOpen, setSuperPlayerOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const settingsTitlePresses = useRef({ count: 0, lastAt: 0 });
 
   const inLobby = screen === "lobby";
@@ -317,7 +320,7 @@ export function Menu() {
             )}
 
             <div className="mt-6 space-y-3">
-              <button className="btn-arcade w-full text-lg" onClick={startMatch}>
+              <button className="btn-arcade w-full text-lg" onClick={() => setMapOpen(true)}>
                 JOGAR
               </button>
               <button className="btn-arcade-ghost w-full" disabled={busy} onClick={() => void openLobby()}>
@@ -792,6 +795,34 @@ export function Menu() {
           <button className="btn-arcade mt-4 w-full" onClick={() => setSuperPlayerOpen(false)}>CONFIRMAR</button>
         </Modal>
       )}
+
+      {mapOpen && (
+        <Modal onClose={() => setMapOpen(false)}>
+          <h3 className="text-2xl font-black">ESCOLHA A ILHA</h3>
+          <p className="mt-1 text-sm text-muted-foreground">A arena é definida antes de a partida começar.</p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {(["nucleo", "pirata"] as const).map((map) => (
+              <button key={map} onClick={() => setSelectedMap(map)} className={`overflow-hidden rounded-xl border-2 text-left ${selectedMap === map ? "border-accent ring-2 ring-accent" : "border-border"}`}>
+                <MapPreview map={map} />
+                <span className="block px-3 py-2 text-sm font-black">{map === "nucleo" ? "ILHA DO NÚCLEO" : "ILHA PIRATA"}</span>
+              </button>
+            ))}
+          </div>
+          <button className="btn-arcade mt-4 w-full" onClick={() => { setMapOpen(false); startMatch(); }}>JOGAR NESTA ILHA</button>
+          <button className="btn-arcade-ghost mt-2 w-full" onClick={() => { setSelectedMap(Math.random() < 0.5 ? "nucleo" : "pirata"); setMapOpen(false); startMatch(); }}>SORTEAR ILHA</button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function MapPreview({ map }: { map: "nucleo" | "pirata" }) {
+  const pirate = map === "pirata";
+  return (
+    <div className={`relative h-24 overflow-hidden ${pirate ? "bg-gradient-to-br from-sky-500 via-cyan-700 to-blue-950" : "bg-gradient-to-br from-sky-300 via-emerald-500 to-cyan-800"}`}>
+      <div className={`absolute left-1/2 top-1/2 h-20 w-28 -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] rounded-[45%] border-4 ${pirate ? "border-amber-700 bg-[#62351e]" : "border-lime-300 bg-emerald-600"}`} />
+      {pirate ? <><div className="absolute left-1/2 top-3 h-16 w-1 -translate-x-1/2 bg-[#3c1d10]" /><div className="absolute left-1/2 top-4 h-8 w-11 -translate-x-1/2 rounded-tr-full bg-red-500/90" /></> : <div className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-cyan-200 shadow-[0_0_14px_4px_rgba(255,255,255,.45)]" />}
+      <span className="absolute bottom-1 left-2 text-[9px] font-black uppercase tracking-wider text-white/90">vista inclinada</span>
     </div>
   );
 }

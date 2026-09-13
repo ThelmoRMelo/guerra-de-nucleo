@@ -9,13 +9,14 @@ import { ISLANDS } from "@/game/world";
 import { input } from "@/game/input";
 import { useGame } from "@/game/store";
 import type { GameEngine } from "@/game/engine";
+import type { ArenaMap } from "@/game/store";
 import type { Pickup } from "@/game/types";
 
 const MAX_TRACERS = 16;
 /** Alcance próximo ao diâmetro de uma ilha: a mira não atravessa o mapa. */
 const GUIDED_AIM_RANGE = 22;
 
-export function Scene({ engine }: { engine: GameEngine }) {
+export function Scene({ engine, selectedMap }: { engine: GameEngine; selectedMap: ArenaMap }) {
   const groupRefs = useRef<(THREE.Group | null)[]>([]);
   const coreRefs = useRef<(THREE.Group | null)[]>([]);
   const tracerRefs = useRef<(THREE.Mesh | null)[]>([]);
@@ -236,7 +237,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
 
   return (
     <>
-      <World3D />
+      <World3D selectedMap={selectedMap} />
 
       {engine.participants.map((p, i) => (
         <group key={p.id}>

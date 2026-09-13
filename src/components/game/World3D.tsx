@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { TUNING } from "@/game/config";
 import { ISLANDS } from "@/game/world";
+import type { ArenaMap } from "@/game/store";
 
 const GRASS = ["#63c66a", "#57bd8f", "#7ccf5e"];
 
-export function World3D() {
+export function World3D({ selectedMap }: { selectedMap: ArenaMap }) {
   const bridges = useMemo(
     () =>
       ISLANDS.map((isl) => {
@@ -63,6 +64,8 @@ export function World3D() {
           );
         })}
       </group>
+
+      {selectedMap === "pirata" && <PirateShip />}
 
       {/* pontes */}
       {bridges.map((b) => (
@@ -149,6 +152,38 @@ export function World3D() {
           })}
         </group>
       ))}
+    </group>
+  );
+}
+
+/** Navio aberto: o jogador entra pelo convés e circula no interior. */
+function PirateShip() {
+  const skulls = Array.from({ length: 10 }, (_, i) => {
+    const a = i * 1.91;
+    const r = 19 + (i % 2) * 7;
+    return [Math.cos(a) * r, Math.sin(a) * r] as const;
+  });
+  return (
+    <group>
+      <group position={[0, 1, 0]}>
+        <mesh receiveShadow castShadow><boxGeometry args={[26, 1.5, 10]} /><meshStandardMaterial color="#5b321b" roughness={0.9} /></mesh>
+        <mesh position={[0, 1.3, -5]} castShadow><boxGeometry args={[26, 3, 0.8]} /><meshStandardMaterial color="#2e160d" /></mesh>
+        <mesh position={[0, 1.3, 5]} castShadow><boxGeometry args={[26, 3, 0.8]} /><meshStandardMaterial color="#2e160d" /></mesh>
+        <mesh position={[-12.5, 2, 0]} castShadow><boxGeometry args={[0.8, 4, 10]} /><meshStandardMaterial color="#3b1d10" /></mesh>
+        <mesh position={[12.5, 2, 0]} castShadow><boxGeometry args={[0.8, 4, 10]} /><meshStandardMaterial color="#3b1d10" /></mesh>
+        <mesh position={[0, 7, 0]} castShadow><cylinderGeometry args={[0.42, 0.55, 13, 10]} /><meshStandardMaterial color="#4a260f" /></mesh>
+        <mesh position={[2.8, 8, 0]} rotation={[0, 0, Math.PI / 2]}><planeGeometry args={[7, 7]} /><meshStandardMaterial color="#d8c29a" /></mesh>
+        <mesh position={[-2.8, 7, 0]} rotation={[0, 0, -Math.PI / 2]}><planeGeometry args={[6, 6]} /><meshStandardMaterial color="#b93232" /></mesh>
+        <mesh position={[0, 2.6, 0]}><octahedronGeometry args={[1.1, 0]} /><meshStandardMaterial color="#7ff0ff" emissive="#3fd8ef" emissiveIntensity={0.8} /></mesh>
+      </group>
+      {skulls.map(([x, z], i) => (
+        <group key={i} position={[x, 0.8, z]} rotation={[0, i * 0.6, 0]}>
+          <mesh castShadow><sphereGeometry args={[0.65, 12, 8]} /><meshStandardMaterial color="#ded6bd" /></mesh>
+          <mesh position={[-0.22, 0.05, -0.55]}><sphereGeometry args={[0.12, 8, 6]} /><meshStandardMaterial color="#16120e" /></mesh>
+          <mesh position={[0.22, 0.05, -0.55]}><sphereGeometry args={[0.12, 8, 6]} /><meshStandardMaterial color="#16120e" /></mesh>
+        </group>
+      ))}
+      {skulls.slice(0, 6).map(([x, z], i) => <mesh key={`rock-${i}`} position={[x * 0.8, 0.6, z * 0.8]} rotation={[0.2, i, 0.1]} castShadow><dodecahedronGeometry args={[1.15, 0]} /><meshStandardMaterial color="#716052" roughness={1} /></mesh>)}
     </group>
   );
 }
