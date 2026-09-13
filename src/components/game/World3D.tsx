@@ -23,8 +23,8 @@ export function World3D({ selectedMap }: { selectedMap: ArenaMap }) {
 
   return (
     <group>
-      {/* ilha central */}
-      <group>
+      {/* A Ilha do Núcleo tem centro terrestre; a Ilha Pirata o substitui por um navio. */}
+      {selectedMap === "nucleo" && <group>
         <mesh position={[0, -0.5, 0]} receiveShadow castShadow>
           <cylinderGeometry args={[TUNING.centerRadius, TUNING.centerRadius - 0.6, 1.2, 40]} />
           <meshStandardMaterial color="#e8c98a" roughness={0.9} />
@@ -63,7 +63,7 @@ export function World3D({ selectedMap }: { selectedMap: ArenaMap }) {
             </mesh>
           );
         })}
-      </group>
+      </group>}
 
       {selectedMap === "pirata" && <PirateShip />}
 
@@ -165,16 +165,17 @@ function PirateShip() {
   });
   return (
     <group>
-      <group position={[0, 1, 0]}>
-        <mesh receiveShadow castShadow><boxGeometry args={[26, 1.5, 10]} /><meshStandardMaterial color="#5b321b" roughness={0.9} /></mesh>
-        <mesh position={[0, 1.3, -5]} castShadow><boxGeometry args={[26, 3, 0.8]} /><meshStandardMaterial color="#2e160d" /></mesh>
-        <mesh position={[0, 1.3, 5]} castShadow><boxGeometry args={[26, 3, 0.8]} /><meshStandardMaterial color="#2e160d" /></mesh>
-        <mesh position={[-12.5, 2, 0]} castShadow><boxGeometry args={[0.8, 4, 10]} /><meshStandardMaterial color="#3b1d10" /></mesh>
-        <mesh position={[12.5, 2, 0]} castShadow><boxGeometry args={[0.8, 4, 10]} /><meshStandardMaterial color="#3b1d10" /></mesh>
-        <mesh position={[0, 7, 0]} castShadow><cylinderGeometry args={[0.42, 0.55, 13, 10]} /><meshStandardMaterial color="#4a260f" /></mesh>
-        <mesh position={[2.8, 8, 0]} rotation={[0, 0, Math.PI / 2]}><planeGeometry args={[7, 7]} /><meshStandardMaterial color="#d8c29a" /></mesh>
-        <mesh position={[-2.8, 7, 0]} rotation={[0, 0, -Math.PI / 2]}><planeGeometry args={[6, 6]} /><meshStandardMaterial color="#b93232" /></mesh>
-        <mesh position={[0, 2.6, 0]}><octahedronGeometry args={[1.1, 0]} /><meshStandardMaterial color="#7ff0ff" emissive="#3fd8ef" emissiveIntensity={0.8} /></mesh>
+      <group>
+        {/* O convés é enorme e aberto no meio: as pontes chegam diretamente ao interior. */}
+        <mesh position={[0, -0.5, 0]} receiveShadow castShadow><boxGeometry args={[70, 1, 42]} /><meshStandardMaterial color="#5b321b" roughness={0.9} /></mesh>
+        <mesh position={[0, 1.8, -21]} castShadow><boxGeometry args={[70, 4, 1.2]} /><meshStandardMaterial color="#2e160d" /></mesh>
+        <mesh position={[0, 1.8, 21]} castShadow><boxGeometry args={[70, 4, 1.2]} /><meshStandardMaterial color="#2e160d" /></mesh>
+        <mesh position={[-35, 2.2, 0]} castShadow><boxGeometry args={[1.2, 4.8, 18]} /><meshStandardMaterial color="#3b1d10" /></mesh>
+        <mesh position={[35, 2.2, 0]} castShadow><boxGeometry args={[1.2, 4.8, 18]} /><meshStandardMaterial color="#3b1d10" /></mesh>
+        <mesh position={[0, 7, 0]} castShadow><cylinderGeometry args={[0.55, 0.7, 15, 10]} /><meshStandardMaterial color="#4a260f" /></mesh>
+        <mesh position={[6, 8.5, 0]} rotation={[0, 0, Math.PI / 2]}><planeGeometry args={[14, 13]} /><meshStandardMaterial color="#d8c29a" /></mesh>
+        <mesh position={[-6, 7.8, 0]} rotation={[0, 0, -Math.PI / 2]}><planeGeometry args={[12, 11]} /><meshStandardMaterial color="#b93232" /></mesh>
+        <mesh position={[0, 1.6, 0]}><octahedronGeometry args={[1.1, 0]} /><meshStandardMaterial color="#7ff0ff" emissive="#3fd8ef" emissiveIntensity={0.8} /></mesh>
       </group>
       {skulls.map(([x, z], i) => (
         <group key={i} position={[x, 0.8, z]} rotation={[0, i * 0.6, 0]}>

@@ -188,6 +188,9 @@ export class GameEngine {
 
   private selectedMap: ArenaMap = "nucleo";
   private obstacles() { return this.selectedMap === "pirata" ? [...OBSTACLES, ...PIRATE_OBSTACLES] : OBSTACLES; }
+  private onGround(x: number, z: number) {
+    return (this.selectedMap === "pirata" && Math.abs(x) <= 35 && Math.abs(z) <= 21) || isOnGround(x, z);
+  }
 
   /** Ativa somente os poderes escolhidos antes de a partida começar. */
   enableSuperPlayer(powers: {
@@ -212,7 +215,7 @@ export class GameEngine {
     );
     if (!participant || participant.eliminated) return;
     // Estados fora da arena nunca são aceitos de outro cliente.
-    if (!isOnGround(state.pos_x, state.pos_z)) return;
+    if (!this.onGround(state.pos_x, state.pos_z)) return;
     const target = { x: state.pos_x, y: state.pos_y, z: state.pos_z };
     // No primeiro pacote, posiciona imediatamente. Nos demais, mantém o
     // pacote como alvo e deixa a interpolação por frame suavizar o trajeto.
@@ -324,12 +327,12 @@ export class GameEngine {
       // ao longo do obstáculo, em vez de atravessá-lo ou parar por completo.
       if (this.canOccupy(p, nx, p.pos.z)) p.pos.x = nx;
       if (this.canOccupy(p, p.pos.x, nz)) p.pos.z = nz;
-      if (!isOnGround(p.pos.x, p.pos.z)) p.vel.y = -1;
+      if (!this.onGround(p.pos.x, p.pos.z)) p.vel.y = -1;
     } else {
       p.pos.x = nx;
       p.pos.z = nz;
     }
-    if (!isOnGround(p.pos.x, p.pos.z)) {
+    if (!this.onGround(p.pos.x, p.pos.z)) {
       p.vel.y -= TUNING.gravity * dt;
       p.pos.y += p.vel.y * dt;
       if (p.pos.y < -25) this.kill(p, null, "caiu no vazio");
@@ -555,13 +558,13 @@ export class GameEngine {
   private canOccupy(p: Participant, x: number, z: number) {
     // A borda de cada ilha, ponte e plataforma central é uma barreira invisível.
     // Nunca aceitamos um passo fora do chão jogável, evitando quedas no vazio.
-    if (!isOnGround(x, z)) return false;
+    if (!this.onGround(x, z)) return false;
     return !this.obstacles().some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.r + CHARACTER_COLLISION_RADIUS);
   }
 
   /** Recupera com segurança entidades que estavam fora da arena antes da barreira existir. */
   private keepInsideArena(p: Participant) {
-    if (p.pos.y >= -0.01 && isOnGround(p.pos.x, p.pos.z)) return;
+    if (p.pos.y >= -0.01 && this.onGround(p.pos.x, p.pos.z)) return;
     const spawn = ISLANDS[p.island]!.spawn;
     p.pos = { ...spawn };
     p.vel = { x: 0, y: 0, z: 0 };

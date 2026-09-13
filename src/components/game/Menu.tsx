@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Repeat2 } from "lucide-react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { World3D } from "./World3D";
 import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
@@ -817,14 +819,24 @@ export function Menu() {
 }
 
 function MapPreview({ map }: { map: "nucleo" | "pirata" }) {
-  const pirate = map === "pirata";
   return (
-    <div className={`relative h-24 overflow-hidden ${pirate ? "bg-gradient-to-br from-sky-500 via-cyan-700 to-blue-950" : "bg-gradient-to-br from-sky-300 via-emerald-500 to-cyan-800"}`}>
-      <div className={`absolute left-1/2 top-1/2 h-20 w-28 -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] rounded-[45%] border-4 ${pirate ? "border-amber-700 bg-[#62351e]" : "border-lime-300 bg-emerald-600"}`} />
-      {pirate ? <><div className="absolute left-1/2 top-3 h-16 w-1 -translate-x-1/2 bg-[#3c1d10]" /><div className="absolute left-1/2 top-4 h-8 w-11 -translate-x-1/2 rounded-tr-full bg-red-500/90" /></> : <div className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-cyan-200 shadow-[0_0_14px_4px_rgba(255,255,255,.45)]" />}
-      <span className="absolute bottom-1 left-2 text-[9px] font-black uppercase tracking-wider text-white/90">vista inclinada</span>
+    <div className="relative h-24 overflow-hidden bg-sky-500">
+      <Canvas dpr={[0.5, 1]} camera={{ position: [0, 80, 72], fov: 42 }} gl={{ antialias: false }}>
+        <PreviewCamera />
+        <color attach="background" args={["#6cc9ec"]} />
+        <hemisphereLight args={["#d9f6ff", "#49613f", 1.4]} />
+        <directionalLight position={[30, 60, 30]} intensity={1.5} />
+        <World3D selectedMap={map} />
+      </Canvas>
+      <span className="pointer-events-none absolute bottom-1 left-2 text-[9px] font-black uppercase tracking-wider text-white/90">mapa real · vista inclinada</span>
     </div>
   );
+}
+
+function PreviewCamera() {
+  const { camera } = useThree();
+  useEffect(() => { camera.lookAt(0, 0, 0); }, [camera]);
+  return null;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

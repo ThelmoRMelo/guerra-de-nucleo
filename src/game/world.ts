@@ -33,8 +33,11 @@ export const CENTER_GEN: Vec3 = { x: 0, y: 0, z: 0 };
 
 /** Colisores do navio oco, rochas e caveiras da arena Ilha Pirata. */
 export const PIRATE_OBSTACLES = [
-  { x: -11, z: 0, r: 1.8 }, { x: 11, z: 0, r: 1.8 },
-  { x: 0, z: -15, r: 2.2 }, { x: 0, z: 15, r: 2.2 },
+  // Laterais do navio: o interior continua aberto pelas entradas das pontes.
+  { x: -34, z: -12, r: 3 }, { x: -34, z: 12, r: 3 },
+  { x: 34, z: -12, r: 3 }, { x: 34, z: 12, r: 3 },
+  { x: -20, z: -20, r: 2.2 }, { x: 20, z: -20, r: 2.2 },
+  { x: -20, z: 20, r: 2.2 }, { x: 20, z: 20, r: 2.2 },
   ...Array.from({ length: 10 }, (_, i) => {
     const a = i * 1.91;
     const r = 19 + (i % 2) * 7;
