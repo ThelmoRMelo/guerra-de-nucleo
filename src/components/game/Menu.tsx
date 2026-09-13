@@ -786,11 +786,12 @@ function Slider({
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/65 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-2xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-2xl bg-card p-5 shadow-2xl"
+        style={{ WebkitOverflowScrolling: "touch" }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
