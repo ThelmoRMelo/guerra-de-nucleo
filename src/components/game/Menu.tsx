@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Repeat2 } from "lucide-react";
 import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
@@ -389,33 +390,48 @@ export function Menu() {
               </p>
             )}
 
-            {(
-              <div className="mt-4 rounded-xl bg-muted/60 p-3">
-                <p className="text-sm font-black">SUA COR DE EQUIPE</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {teamMode ? "Cada cor comporta até dois aliados." : "Escolha uma cor livre antes de a partida começar."}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(teamMode ? TEAM_COLORS.slice(0, 4) : TEAM_COLORS).map((color) => {
-                    const occupiedByOther = colorUse(color) >= (teamMode ? 2 : 1) && color !== teamColor;
-                    const selected = color === teamColor;
-                    return (
-                      <button
-                        key={color}
-                        type="button"
-                        disabled={occupiedByOther || room?.status !== "lobby" || busy}
-                        aria-label={occupiedByOther ? "Cor ocupada" : "Escolher cor"}
-                        className={`h-9 w-9 rounded-full border-2 transition-transform disabled:cursor-not-allowed disabled:opacity-25 ${
-                          selected ? "scale-110 border-white ring-2 ring-accent" : "border-black/30"
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => void changeLobbyColor(color)}
-                      />
-                    );
-                  })}
-                </div>
+            <div className="mt-4 rounded-xl bg-muted/60 p-3">
+              <div className="flex items-center gap-2">
+                <Repeat2 className="h-4 w-4 text-accent" />
+                <p className="text-sm font-black">TROCAR DE EQUIPE</p>
               </div>
-            )}
+              <p className="mt-1 text-xs text-muted-foreground">
+                {teamMode
+                  ? "Escolha a cor da equipe e a ilha/base onde você vai nascer. Cada equipe tem duas vagas."
+                  : "Escolha a cor e a ilha/base onde você vai nascer."}
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {(teamMode ? TEAM_COLORS.slice(0, 4) : TEAM_COLORS).map((color, index) => {
+                  const used = colorUse(color);
+                  const capacity = teamMode ? 2 : 1;
+                  const selected = color === teamColor;
+                  const full = used >= capacity && !selected;
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      disabled={full || room?.status !== "lobby" || busy}
+                      aria-label={full ? "Equipe completa" : `Trocar para a equipe ${index + 1}`}
+                      onClick={() => void changeLobbyColor(color)}
+                      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                        selected ? "border-accent bg-accent/15 ring-1 ring-accent" : "border-border bg-background/60 hover:bg-background"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-xs font-black">
+                        <span className="h-4 w-4 rounded-full border border-white/60" style={{ backgroundColor: color }} />
+                        {teamMode ? `EQUIPE ${index + 1}` : `BASE ${index + 1}`}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                        {used}/{capacity} <Repeat2 className="h-3.5 w-3.5" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {fillEmptySlotsWithBots ? "Vagas sem pessoas serão preenchidas por bots ao iniciar." : "Vagas sem pessoas ficarão livres."}
+              </p>
+            </div>
 
             <div className="mt-4 rounded-xl bg-muted/60 p-3">
               <p className="text-sm font-black">MODO DE JOGO</p>
