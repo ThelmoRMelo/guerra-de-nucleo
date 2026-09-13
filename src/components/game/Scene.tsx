@@ -12,6 +12,8 @@ import type { GameEngine } from "@/game/engine";
 import type { Pickup } from "@/game/types";
 
 const MAX_TRACERS = 16;
+/** Alcance próximo ao diâmetro de uma ilha: a mira não atravessa o mapa. */
+const GUIDED_AIM_RANGE = 22;
 
 export function Scene({ engine }: { engine: GameEngine }) {
   const groupRefs = useRef<(THREE.Group | null)[]>([]);
@@ -68,7 +70,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
       const target = engine.participants
         .filter((p) => p.isBot && p.alive && !p.eliminated)
         .map((p) => ({ p, distance: Math.hypot(p.pos.x - aimPlayer.pos.x, p.pos.z - aimPlayer.pos.z) }))
-        .filter(({ distance }) => distance <= 60)
+        .filter(({ distance }) => distance <= GUIDED_AIM_RANGE)
         .sort((a, b) => a.distance - b.distance)[0];
       if (target) {
         aimPoint.set(target.p.pos.x, target.p.pos.y + 1.1, target.p.pos.z);

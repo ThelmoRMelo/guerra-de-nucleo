@@ -738,7 +738,7 @@ export function Menu() {
               <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={superSpeedMode} onChange={(e) => setSuperSpeedMode(e.target.checked)} />
             </label>
             <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
-              <span><span className="block font-black text-amber-100">MIRA GUIADA</span><span className="block text-xs text-muted-foreground">Puxa o disparo para o bot inimigo mais próximo dentro do alcance.</span></span>
+              <span><span className="block font-black text-amber-100">MIRA GUIADA</span><span className="block text-xs text-muted-foreground">Puxa o disparo para o bot mais próximo somente na área de uma ilha.</span></span>
               <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={guidedAimMode} onChange={(e) => setGuidedAimMode(e.target.checked)} />
             </label>
           </div>
