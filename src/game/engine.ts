@@ -410,12 +410,22 @@ export class GameEngine {
     }
     const y = aimYaw + (Math.random() - 0.5) * spread * 12;
     const pi = aimPitch + (Math.random() - 0.5) * spread * 6;
-    const dir = {
+    let dir = {
       x: -Math.sin(y) * Math.cos(pi),
       y: Math.sin(pi),
       z: -Math.cos(y) * Math.cos(pi),
     };
     const origin: Vec3 = { x: p.pos.x, y: p.pos.y + 1.4, z: p.pos.z };
+    // Assistência leve para toque e terceira pessoa: corrige apenas tiros de
+    // humanos quando um bot estiver realmente à frente da mira, nunca atrás.
+    const smartTarget = !p.isBot ? this.findSmartAimTarget(p, origin, dir, w.range) : null;
+    if (smartTarget) {
+      const dx = smartTarget.pos.x - origin.x;
+      const dy = smartTarget.pos.y + 1.05 - origin.y;
+      const dz = smartTarget.pos.z - origin.z;
+      const length = Math.hypot(dx, dy, dz);
+      dir = { x: dx / length, y: dy / length, z: dz / length };
+    }
     const hit = this.raycast(origin, dir, w.range, p);
     const end = hit
       ? hit.point
@@ -442,6 +452,24 @@ export class GameEngine {
       this.damageCore(owner, dmg, p);
       this.hits.push({ id: nextId(), pos: hit.point, born: this.time, kind: "core" });
     }
+  }
+
+  /** Retorna o bot mais próximo que já esteja perto do centro da mira. */
+  private findSmartAimTarget(shooter: Participant, origin: Vec3, direction: Vec3, range: number) {
+    let best: { target: Participant; distance: number } | null = null;
+    for (const target of this.participants) {
+      if (!target.isBot || !target.alive || target.eliminated) continue;
+      const dx = target.pos.x - origin.x;
+      const dy = target.pos.y + 1.05 - origin.y;
+      const dz = target.pos.z - origin.z;
+      const distance = Math.hypot(dx, dy, dz);
+      if (distance > range || distance < 0.5) continue;
+      // Cone de 16°: ajuda quem está mirando perto do alvo sem "mira automática" total.
+      const facing = (dx * direction.x + dy * direction.y + dz * direction.z) / distance;
+      if (facing < Math.cos((16 * Math.PI) / 180)) continue;
+      if (!best || distance < best.distance) best = { target, distance };
+    }
+    return best?.target ?? null;
   }
 
   private raycast(origin: Vec3, dir: Vec3, range: number, shooter: Participant) {
