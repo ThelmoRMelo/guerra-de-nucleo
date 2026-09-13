@@ -35,6 +35,8 @@ export interface Participant {
   coreRestorations: number;
   /** Super Player: não aparece para os outros e não pode ser atingido. */
   godMode: boolean;
+  coreShieldMode: boolean;
+  superSpeedMode: boolean;
   pos: Vec3;
   /** Último estado remoto recebido; a posição exibida se aproxima dele por frame. */
   networkTargetPos?: Vec3;

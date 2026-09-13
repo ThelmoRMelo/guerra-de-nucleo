@@ -59,6 +59,7 @@ export interface RemotePlayerState {
   yaw: number;
   moving: boolean;
   godMode?: boolean;
+  coreShieldMode?: boolean;
 }
 
 export class GameEngine {
@@ -93,6 +94,9 @@ export class GameEngine {
     localNetworkPlayerId = "",
     playerSkin: SkinId = "classico",
     godMode = false,
+    coreShieldMode = false,
+    infiniteDiamondsMode = false,
+    superSpeedMode = false,
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
@@ -121,7 +125,9 @@ export class GameEngine {
       this.participants.push(participant);
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
-    if (godMode) this.enableGodMode();
+    if (godMode || coreShieldMode || infiniteDiamondsMode || superSpeedMode) {
+      this.enableSuperPlayer({ godMode, coreShieldMode, infiniteDiamondsMode, superSpeedMode });
+    }
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);
   }
 
@@ -140,6 +146,8 @@ export class GameEngine {
       coreHp: TUNING.coreMaxHp,
       coreRestorations: 0,
       godMode: false,
+      coreShieldMode: false,
+      superSpeedMode: false,
       pos: { ...isl.spawn },
       vel: { x: 0, y: 0, z: 0 },
       yaw: Math.atan2(Math.cos(isl.angle), Math.sin(isl.angle)),
@@ -173,20 +181,20 @@ export class GameEngine {
     return this.participants.find((p) => p.id === this.playerId)!;
   }
 
-  /** Ativa benefícios locais antes de a partida começar. */
-  enableGodMode() {
-    this.godMode = true;
+  /** Ativa somente os poderes escolhidos antes de a partida começar. */
+  enableSuperPlayer(powers: {
+    godMode: boolean;
+    coreShieldMode: boolean;
+    infiniteDiamondsMode: boolean;
+    superSpeedMode: boolean;
+  }) {
+    this.godMode = powers.godMode;
     const p = this.player;
-    p.godMode = true;
-    p.coreHp = TUNING.coreMaxHp;
-    p.hp = TUNING.playerMaxHp;
-    p.diamond = 9999;
-    p.owned = Object.keys(WEAPONS) as WeaponId[];
-    p.weapon = "sniper";
-    p.upgrades = Object.fromEntries(
-      Object.entries(UPGRADES).map(([id, upgrade]) => [id, upgrade.maxLevel]),
-    ) as Record<UpgradeId, number>;
-    p.ammo = this.magazineOf(p);
+    p.godMode = powers.godMode;
+    p.coreShieldMode = powers.coreShieldMode;
+    p.superSpeedMode = powers.superSpeedMode;
+    if (powers.coreShieldMode) p.coreHp = TUNING.coreMaxHp;
+    if (powers.infiniteDiamondsMode) p.diamond = 9999;
   }
 
   /** Aplica a posição recebida do dono do personagem, sem afetar o jogador local. */
@@ -208,6 +216,7 @@ export class GameEngine {
     participant.networkTargetYaw = state.yaw;
     participant.moving = state.moving;
     participant.godMode = Boolean(state.godMode);
+    participant.coreShieldMode = Boolean(state.coreShieldMode);
   }
 
   /** Replica um dano já confirmado pelo jogador que atirou, sem recalcular armadura. */
@@ -224,7 +233,7 @@ export class GameEngine {
   /** Replica dano de núcleo confirmado pelo atirador para todos os participantes. */
   applyNetworkCoreDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
     const owner = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
-    if (!owner || owner.godMode || owner.coreHp <= 0) return;
+    if (!owner || owner.coreShieldMode || owner.coreHp <= 0) return;
     owner.coreHp = Math.max(0, owner.coreHp - amount);
     if (owner.coreHp <= 0) {
       this.onSound?.("core");
@@ -265,7 +274,8 @@ export class GameEngine {
 
   private speedOf(p: Participant) {
     const speedBoost = p.speedBoostUntil > this.time ? p.speedBoostMultiplier : 1;
-    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.2) * speedBoost;
+    const superSpeed = p.superSpeedMode ? 6 : 1;
+    return TUNING.moveSpeed * (1 + p.upgrades.velocidade * 0.2) * speedBoost * superSpeed;
   }
 
   private updatePlayer(dt: number, input: PlayerInput) {
@@ -452,11 +462,11 @@ export class GameEngine {
       };
     };
     for (const o of this.participants) {
-      if (o.id !== shooter.id && !o.godMode && o.alive && !o.eliminated && o.protectedUntil < this.time) {
+      if (o.id !== shooter.id && o.alive && !o.eliminated && o.protectedUntil < this.time) {
         const d = raySphere(origin, dir, { x: o.pos.x, y: o.pos.y + 1.1, z: o.pos.z }, 1.0);
         if (d !== null) consider(d, "player", o);
       }
-      if (o.id !== shooter.id && !o.godMode && o.coreHp > 0) {
+      if (o.id !== shooter.id && !o.coreShieldMode && o.coreHp > 0) {
         const core = ISLANDS[o.island]!.core;
         const d = raySphere(origin, dir, { x: core.x, y: 1.5, z: core.z }, 1.7);
         if (d !== null) consider(d, "core", o);
@@ -538,7 +548,7 @@ export class GameEngine {
   }
 
   damageCore(owner: Participant, amount: number, from: Participant) {
-    if (owner.godMode || owner.coreHp <= 0) return;
+    if (owner.coreShieldMode || owner.coreHp <= 0) return;
     owner.coreHp = Math.max(0, owner.coreHp - amount);
     if (
       from.id === this.playerId &&

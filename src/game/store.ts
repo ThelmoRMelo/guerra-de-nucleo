@@ -60,6 +60,9 @@ interface GameStore {
   vibration: boolean;
   superPlayerUnlocked: boolean;
   godMode: boolean;
+  coreShieldMode: boolean;
+  infiniteDiamondsMode: boolean;
+  superSpeedMode: boolean;
   hud: HudSnapshot | null;
   engine: GameEngine | null;
   matchPlayers: MatchPlayer[];
@@ -80,6 +83,9 @@ interface GameStore {
   setPaused: (v: boolean) => void;
   unlockSuperPlayer: () => void;
   setGodMode: (enabled: boolean) => void;
+  setCoreShieldMode: (enabled: boolean) => void;
+  setInfiniteDiamondsMode: (enabled: boolean) => void;
+  setSuperSpeedMode: (enabled: boolean) => void;
   setSetting: <K extends keyof GameStore>(k: K, v: GameStore[K]) => void;
   setHud: (h: HudSnapshot) => void;
   setEngine: (e: GameEngine | null) => void;
@@ -106,6 +112,9 @@ export const useGame = create<GameStore>((set) => ({
   vibration: true,
   superPlayerUnlocked: false,
   godMode: false,
+  coreShieldMode: false,
+  infiniteDiamondsMode: false,
+  superSpeedMode: false,
   hud: null,
   engine: null,
   matchPlayers: [],
@@ -144,6 +153,9 @@ export const useGame = create<GameStore>((set) => ({
   setPaused: (paused) => set({ paused }),
   unlockSuperPlayer: () => set({ superPlayerUnlocked: true }),
   setGodMode: (godMode) => set({ godMode }),
+  setCoreShieldMode: (coreShieldMode) => set({ coreShieldMode }),
+  setInfiniteDiamondsMode: (infiniteDiamondsMode) => set({ infiniteDiamondsMode }),
+  setSuperSpeedMode: (superSpeedMode) => set({ superSpeedMode }),
   setSetting: (k, v) => set({ [k]: v } as never),
   setHud: (hud) => set({ hud }),
   setEngine: (engine) => set({ engine }),

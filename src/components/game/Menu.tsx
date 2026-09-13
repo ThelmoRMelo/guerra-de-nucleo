@@ -46,6 +46,12 @@ export function Menu() {
   const unlockSuperPlayer = useGame((s) => s.unlockSuperPlayer);
   const godMode = useGame((s) => s.godMode);
   const setGodMode = useGame((s) => s.setGodMode);
+  const coreShieldMode = useGame((s) => s.coreShieldMode);
+  const setCoreShieldMode = useGame((s) => s.setCoreShieldMode);
+  const infiniteDiamondsMode = useGame((s) => s.infiniteDiamondsMode);
+  const setInfiniteDiamondsMode = useGame((s) => s.setInfiniteDiamondsMode);
+  const superSpeedMode = useGame((s) => s.superSpeedMode);
+  const setSuperSpeedMode = useGame((s) => s.setSuperSpeedMode);
 
   const [nameOpen, setNameOpen] = useState(false);
   const [draft, setDraft] = useState(playerName);
@@ -709,19 +715,26 @@ export function Menu() {
           <div className="rounded-xl border border-amber-300/50 bg-gradient-to-br from-amber-400/15 to-fuchsia-500/10 p-4">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">Acesso secreto</p>
             <h3 className="mt-1 text-2xl font-black text-amber-100">SUPER PLAYER</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Poderes especiais são aplicados ao iniciar a próxima partida.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Cada poder é independente e é aplicado ao iniciar a próxima partida.</p>
             <label className="mt-4 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
               <span>
                 <span className="block font-black text-amber-100">MODO DEUS</span>
-                <span className="block text-xs text-muted-foreground">Núcleo indestrutível, invisibilidade, arsenal e melhorias máximas.</span>
+                <span className="block text-xs text-muted-foreground">Seu personagem não recebe dano e não morre.</span>
               </span>
               <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={godMode} onChange={(e) => setGodMode(e.target.checked)} />
             </label>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-amber-100">
-              <span className="rounded-lg bg-black/20 px-2 py-2">∞ DIAMANTES</span>
-              <span className="rounded-lg bg-black/20 px-2 py-2">ARMAS LIVRES</span>
-              <span className="rounded-lg bg-black/20 px-2 py-2">UPGRADES MAX</span>
-            </div>
+            <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
+              <span><span className="block font-black text-amber-100">NÚCLEO INDESTRUTÍVEL</span><span className="block text-xs text-muted-foreground">Trava o núcleo em 100% até o fim da partida.</span></span>
+              <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={coreShieldMode} onChange={(e) => setCoreShieldMode(e.target.checked)} />
+            </label>
+            <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
+              <span><span className="block font-black text-amber-100">DIAMANTES 9.999</span><span className="block text-xs text-muted-foreground">Começa com 9.999; compras e coletas seguem normalmente.</span></span>
+              <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={infiniteDiamondsMode} onChange={(e) => setInfiniteDiamondsMode(e.target.checked)} />
+            </label>
+            <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
+              <span><span className="block font-black text-amber-100">SUPER VELOCIDADE</span><span className="block text-xs text-muted-foreground">Velocidade extrema, acima de bots e jogadores com upgrades máximos.</span></span>
+              <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={superSpeedMode} onChange={(e) => setSuperSpeedMode(e.target.checked)} />
+            </label>
           </div>
           <button className="btn-arcade mt-4 w-full" onClick={() => setSuperPlayerOpen(false)}>CONFIRMAR</button>
         </Modal>

@@ -28,6 +28,9 @@ export function GameCanvas() {
   const musicVolume = useGame((s) => s.musicVolume);
   const sensitivity = useGame((s) => s.sensitivity);
   const godMode = useGame((s) => s.godMode);
+  const coreShieldMode = useGame((s) => s.coreShieldMode);
+  const infiniteDiamondsMode = useGame((s) => s.infiniteDiamondsMode);
+  const superSpeedMode = useGame((s) => s.superSpeedMode);
   const shopOpen = useGame((s) => s.shopOpen);
   const emoteOpen = useGame((s) => s.emoteOpen);
   const paused = useGame((s) => s.paused);
@@ -52,6 +55,9 @@ export function GameCanvas() {
       localPlayerId,
       playerSkin,
       godMode,
+      coreShieldMode,
+      infiniteDiamondsMode,
+      superSpeedMode,
     );
     e.onSound = playSound;
     return e;
