@@ -52,6 +52,8 @@ export function Menu() {
   const setInfiniteDiamondsMode = useGame((s) => s.setInfiniteDiamondsMode);
   const superSpeedMode = useGame((s) => s.superSpeedMode);
   const setSuperSpeedMode = useGame((s) => s.setSuperSpeedMode);
+  const guidedAimMode = useGame((s) => s.guidedAimMode);
+  const setGuidedAimMode = useGame((s) => s.setGuidedAimMode);
 
   const [nameOpen, setNameOpen] = useState(false);
   const [draft, setDraft] = useState(playerName);
@@ -734,6 +736,10 @@ export function Menu() {
             <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
               <span><span className="block font-black text-amber-100">SUPER VELOCIDADE</span><span className="block text-xs text-muted-foreground">Velocidade extrema, acima de bots e jogadores com upgrades máximos.</span></span>
               <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={superSpeedMode} onChange={(e) => setSuperSpeedMode(e.target.checked)} />
+            </label>
+            <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
+              <span><span className="block font-black text-amber-100">MIRA GUIADA</span><span className="block text-xs text-muted-foreground">Puxa o disparo para o bot inimigo mais próximo dentro do alcance.</span></span>
+              <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={guidedAimMode} onChange={(e) => setGuidedAimMode(e.target.checked)} />
             </label>
           </div>
           <button className="btn-arcade mt-4 w-full" onClick={() => setSuperPlayerOpen(false)}>CONFIRMAR</button>

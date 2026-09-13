@@ -93,6 +93,11 @@ export function HUD({ engine }: { engine: GameEngine }) {
             [E] FALAR COM O COMERCIANTE
           </p>
         )}
+        {hud.guidedAimActive && (
+          <p className="rounded-full bg-amber-400/90 px-3 py-1 text-xs font-black text-black">
+            ◎ MIRA GUIADA: BOT DETECTADO
+          </p>
+        )}
         {hud.events.slice(-3).map((e, i) => (
           <p key={i} className="rounded-full bg-hud-panel/70 px-3 py-1 text-xs text-hud-text">
             {e}

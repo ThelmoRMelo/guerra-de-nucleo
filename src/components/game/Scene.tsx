@@ -24,6 +24,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
   const shopOpen = useGame((s) => s.shopOpen);
   const setShopOpen = useGame((s) => s.setShopOpen);
   const paused = useGame((s) => s.paused);
+  const guidedAimMode = useGame((s) => s.guidedAimMode);
   const { camera } = useThree();
   const hudTimer = useRef(0);
   const pickTimer = useRef(0);
@@ -59,8 +60,26 @@ export function Scene({ engine }: { engine: GameEngine }) {
     const aimDx = aimPoint.x - aimPlayer.pos.x;
     const aimDz = aimPoint.z - aimPlayer.pos.z;
     const aimDistance = Math.hypot(aimDx, aimDz);
-    const aimYaw = Math.atan2(-aimDx, -aimDz);
-    const aimPitch = Math.atan2(aimPoint.y - (aimPlayer.pos.y + 1.4), aimDistance);
+    let aimYaw = Math.atan2(-aimDx, -aimDz);
+    let aimPitch = Math.atan2(aimPoint.y - (aimPlayer.pos.y + 1.4), aimDistance);
+    let guidedAimActive = false;
+
+    if (guidedAimMode && aimPlayer.alive) {
+      const target = engine.participants
+        .filter((p) => p.isBot && p.alive && !p.eliminated)
+        .map((p) => ({ p, distance: Math.hypot(p.pos.x - aimPlayer.pos.x, p.pos.z - aimPlayer.pos.z) }))
+        .filter(({ distance }) => distance <= 60)
+        .sort((a, b) => a.distance - b.distance)[0];
+      if (target) {
+        aimPoint.set(target.p.pos.x, target.p.pos.y + 1.1, target.p.pos.z);
+        const dx = aimPoint.x - aimPlayer.pos.x;
+        const dz = aimPoint.z - aimPlayer.pos.z;
+        const distance = Math.hypot(dx, dz);
+        aimYaw = Math.atan2(-dx, -dz);
+        aimPitch = Math.atan2(aimPoint.y - (aimPlayer.pos.y + 1.4), distance);
+        guidedAimActive = true;
+      }
+    }
 
     if (!blocked) {
       const reload = input.reloadPulse;
@@ -196,6 +215,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
         protectedNow: pl.protectedUntil > engine.time,
         respawnIn: Math.max(0, Math.ceil(pl.respawnAt - engine.time)),
         nearShop: engine.nearShop(pl) && pl.alive,
+        guidedAimActive,
         events: engine.events.map((e) => e.text),
         scoreboard: engine.participants.map((p) => ({
           id: p.id,

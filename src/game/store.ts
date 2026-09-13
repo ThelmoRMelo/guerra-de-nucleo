@@ -21,6 +21,7 @@ export interface HudSnapshot {
   protectedNow: boolean;
   respawnIn: number;
   nearShop: boolean;
+  guidedAimActive: boolean;
   events: string[];
   scoreboard: {
     id: string;
@@ -63,6 +64,7 @@ interface GameStore {
   coreShieldMode: boolean;
   infiniteDiamondsMode: boolean;
   superSpeedMode: boolean;
+  guidedAimMode: boolean;
   hud: HudSnapshot | null;
   engine: GameEngine | null;
   matchPlayers: MatchPlayer[];
@@ -86,6 +88,7 @@ interface GameStore {
   setCoreShieldMode: (enabled: boolean) => void;
   setInfiniteDiamondsMode: (enabled: boolean) => void;
   setSuperSpeedMode: (enabled: boolean) => void;
+  setGuidedAimMode: (enabled: boolean) => void;
   setSetting: <K extends keyof GameStore>(k: K, v: GameStore[K]) => void;
   setHud: (h: HudSnapshot) => void;
   setEngine: (e: GameEngine | null) => void;
@@ -115,6 +118,7 @@ export const useGame = create<GameStore>((set) => ({
   coreShieldMode: false,
   infiniteDiamondsMode: false,
   superSpeedMode: false,
+  guidedAimMode: false,
   hud: null,
   engine: null,
   matchPlayers: [],
@@ -156,6 +160,7 @@ export const useGame = create<GameStore>((set) => ({
   setCoreShieldMode: (coreShieldMode) => set({ coreShieldMode }),
   setInfiniteDiamondsMode: (infiniteDiamondsMode) => set({ infiniteDiamondsMode }),
   setSuperSpeedMode: (superSpeedMode) => set({ superSpeedMode }),
+  setGuidedAimMode: (guidedAimMode) => set({ guidedAimMode }),
   setSetting: (k, v) => set({ [k]: v } as never),
   setHud: (hud) => set({ hud }),
   setEngine: (engine) => set({ engine }),
