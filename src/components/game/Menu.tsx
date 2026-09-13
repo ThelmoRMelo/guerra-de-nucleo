@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
 import { useRoomSync } from "@/hooks/useRoomSync";
@@ -42,6 +42,10 @@ export function Menu() {
   const vibration = useGame((s) => s.vibration);
   const settings = { sfxVolume, musicVolume, quality, sensitivity, vibration };
   const setSetting = useGame((s) => s.setSetting);
+  const superPlayerUnlocked = useGame((s) => s.superPlayerUnlocked);
+  const unlockSuperPlayer = useGame((s) => s.unlockSuperPlayer);
+  const godMode = useGame((s) => s.godMode);
+  const setGodMode = useGame((s) => s.setGodMode);
 
   const [nameOpen, setNameOpen] = useState(false);
   const [draft, setDraft] = useState(playerName);
@@ -53,6 +57,9 @@ export function Menu() {
   const [busy, setBusy] = useState(false);
   const [lobbyError, setLobbyError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [superPlayerOpen, setSuperPlayerOpen] = useState(false);
+  const settingsTitlePresses = useRef({ count: 0, lastAt: 0 });
 
   const inLobby = screen === "lobby";
   const { room, players, connection, notice } = useRoomSync(roomCode, inLobby);
@@ -176,6 +183,17 @@ export function Menu() {
     }
     setLobbyError("");
     setTeamColor(res.color ?? color);
+  };
+
+  const revealSuperPlayer = () => {
+    const now = Date.now();
+    const presses = settingsTitlePresses.current;
+    presses.count = now - presses.lastAt < 4500 ? presses.count + 1 : 1;
+    presses.lastAt = now;
+    if (presses.count < 10) return;
+    presses.count = 0;
+    unlockSuperPlayer();
+    setSuperPlayerOpen(true);
   };
 
   return (
@@ -306,7 +324,7 @@ export function Menu() {
               <button className="btn-arcade-ghost w-full" onClick={() => setScreen("howto")}>
                 COMO JOGAR
               </button>
-              <button className="btn-arcade-ghost w-full" onClick={() => setScreen("settings")}>
+              <button className="btn-arcade-ghost w-full" onClick={() => setSettingsOpen(true)}>
                 CONFIGURAÇÕES
               </button>
             </div>
@@ -558,55 +576,6 @@ export function Menu() {
           </div>
         )}
 
-        {screen === "settings" && (
-          <div className="space-y-4 rounded-2xl bg-card/85 p-5 text-sm shadow-2xl">
-            <h2 className="text-2xl font-black">CONFIGURAÇÕES</h2>
-            <Slider
-              label={`Volume dos efeitos: ${Math.round(settings.sfxVolume * 100)}%`}
-              value={settings.sfxVolume}
-              onChange={(v) => setSetting("sfxVolume", v)}
-            />
-            <Slider
-              label={`Volume da música: ${Math.round(settings.musicVolume * 100)}%`}
-              value={settings.musicVolume}
-              onChange={(v) => setSetting("musicVolume", v)}
-            />
-            <Slider
-              label={`Sensibilidade da câmera: ${settings.sensitivity.toFixed(1)}x`}
-              value={settings.sensitivity / 3}
-              onChange={(v) => setSetting("sensitivity", Math.max(0.2, v * 3))}
-            />
-            <div>
-              <p className="mb-1 font-bold">Qualidade gráfica</p>
-              <div className="flex gap-2">
-                {(["baixa", "media", "alta"] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setSetting("quality", q)}
-                    className={`flex-1 rounded-lg px-2 py-2 text-xs font-bold uppercase ${
-                      settings.quality === q
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <label className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2">
-              <span className="font-bold">Vibração no celular</span>
-              <input
-                type="checkbox"
-                checked={settings.vibration}
-                onChange={(e) => setSetting("vibration", e.target.checked)}
-              />
-            </label>
-            <button className="btn-arcade-ghost w-full" onClick={() => setScreen("menu")}>
-              VOLTAR
-            </button>
-          </div>
-        )}
       </div>
 
       {nameOpen && (
@@ -681,6 +650,80 @@ export function Menu() {
               CANCELAR
             </button>
           </div>
+        </Modal>
+      )}
+
+      {settingsOpen && (
+        <Modal onClose={() => setSettingsOpen(false)}>
+          <button
+            type="button"
+            className="w-full cursor-default text-left text-2xl font-black"
+            onClick={revealSuperPlayer}
+            aria-label="Configurações"
+          >
+            CONFIGURAÇÕES
+          </button>
+          <p className="mt-1 text-xs text-muted-foreground">Ajuste sua experiência de jogo.</p>
+          <div className="mt-5 space-y-4 text-sm">
+            <Slider
+              label={`Volume dos efeitos: ${Math.round(settings.sfxVolume * 100)}%`}
+              value={settings.sfxVolume}
+              onChange={(v) => setSetting("sfxVolume", v)}
+            />
+            <Slider
+              label={`Volume da música: ${Math.round(settings.musicVolume * 100)}%`}
+              value={settings.musicVolume}
+              onChange={(v) => setSetting("musicVolume", v)}
+            />
+            <Slider
+              label={`Sensibilidade da câmera: ${settings.sensitivity.toFixed(1)}x`}
+              value={settings.sensitivity / 3}
+              onChange={(v) => setSetting("sensitivity", Math.max(0.2, v * 3))}
+            />
+            <div>
+              <p className="mb-1 font-bold">Qualidade gráfica</p>
+              <div className="flex gap-2">
+                {(["baixa", "media", "alta"] as const).map((q) => (
+                  <button key={q} onClick={() => setSetting("quality", q)} className={`flex-1 rounded-lg px-2 py-2 text-xs font-bold uppercase ${settings.quality === q ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2">
+              <span className="font-bold">Vibração no celular</span>
+              <input type="checkbox" checked={settings.vibration} onChange={(e) => setSetting("vibration", e.target.checked)} />
+            </label>
+            {superPlayerUnlocked && (
+              <button className="w-full rounded-lg border border-amber-300/50 bg-amber-400/10 px-3 py-2 text-xs font-black text-amber-200" onClick={() => setSuperPlayerOpen(true)}>
+                ✦ SUPER PLAYER DESBLOQUEADO
+              </button>
+            )}
+            <button className="btn-arcade-ghost w-full" onClick={() => setSettingsOpen(false)}>FECHAR</button>
+          </div>
+        </Modal>
+      )}
+
+      {superPlayerOpen && (
+        <Modal onClose={() => setSuperPlayerOpen(false)}>
+          <div className="rounded-xl border border-amber-300/50 bg-gradient-to-br from-amber-400/15 to-fuchsia-500/10 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">Acesso secreto</p>
+            <h3 className="mt-1 text-2xl font-black text-amber-100">SUPER PLAYER</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Poderes especiais são aplicados ao iniciar a próxima partida.</p>
+            <label className="mt-4 flex cursor-pointer items-center justify-between rounded-xl bg-black/25 px-3 py-3">
+              <span>
+                <span className="block font-black text-amber-100">MODO DEUS</span>
+                <span className="block text-xs text-muted-foreground">Núcleo indestrutível, invisibilidade, arsenal e melhorias máximas.</span>
+              </span>
+              <input className="h-5 w-5 accent-amber-400" type="checkbox" checked={godMode} onChange={(e) => setGodMode(e.target.checked)} />
+            </label>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-amber-100">
+              <span className="rounded-lg bg-black/20 px-2 py-2">∞ DIAMANTES</span>
+              <span className="rounded-lg bg-black/20 px-2 py-2">ARMAS LIVRES</span>
+              <span className="rounded-lg bg-black/20 px-2 py-2">UPGRADES MAX</span>
+            </div>
+          </div>
+          <button className="btn-arcade mt-4 w-full" onClick={() => setSuperPlayerOpen(false)}>CONFIRMAR</button>
         </Modal>
       )}
     </div>

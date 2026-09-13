@@ -12,6 +12,7 @@ interface RemotePlayerState {
   pos_z: number;
   yaw: number;
   moving: boolean;
+  godMode: boolean;
 }
 
 interface PlayerDamageEvent {
@@ -48,6 +49,7 @@ export function useMatchPositionSync(engine: GameEngine) {
         pos_z: player.pos.z,
         yaw: player.yaw,
         moving: player.moving,
+        godMode: player.godMode,
       };
     };
     const persist = (state: RemotePlayerState) => {

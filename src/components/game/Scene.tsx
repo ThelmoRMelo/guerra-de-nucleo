@@ -104,7 +104,8 @@ export function Scene({ engine }: { engine: GameEngine }) {
     engine.participants.forEach((p, i) => {
       const g = groupRefs.current[i];
       if (!g) return;
-      g.visible = p.alive && !p.eliminated;
+      // O próprio Super Player continua vendo seu avatar; clientes remotos o ocultam.
+      g.visible = p.alive && !p.eliminated && (!p.godMode || p.id === engine.playerId);
       g.position.set(p.pos.x, p.pos.y, p.pos.z);
       g.rotation.y = p.yaw;
       const swing = p.moving ? Math.sin(p.walkPhase) * 0.6 : 0;
@@ -230,7 +231,7 @@ export function Scene({ engine }: { engine: GameEngine }) {
 
       {/* etiquetas de nome */}
       {engine.participants.map((p) =>
-        p.alive && !p.eliminated && p.id !== engine.playerId ? (
+        p.alive && !p.eliminated && !p.godMode && p.id !== engine.playerId ? (
           <Html
             key={`n${p.id}`}
             position={[p.pos.x, p.pos.y + 2.35, p.pos.z]}

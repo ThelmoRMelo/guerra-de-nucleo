@@ -27,6 +27,7 @@ export function GameCanvas() {
   const sfxVolume = useGame((s) => s.sfxVolume);
   const musicVolume = useGame((s) => s.musicVolume);
   const sensitivity = useGame((s) => s.sensitivity);
+  const godMode = useGame((s) => s.godMode);
   const shopOpen = useGame((s) => s.shopOpen);
   const emoteOpen = useGame((s) => s.emoteOpen);
   const paused = useGame((s) => s.paused);
@@ -50,6 +51,7 @@ export function GameCanvas() {
       fillEmptySlotsWithBots,
       localPlayerId,
       playerSkin,
+      godMode,
     );
     e.onSound = playSound;
     return e;

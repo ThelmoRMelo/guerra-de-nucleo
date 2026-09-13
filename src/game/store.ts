@@ -58,6 +58,8 @@ interface GameStore {
   quality: "baixa" | "media" | "alta";
   sensitivity: number;
   vibration: boolean;
+  superPlayerUnlocked: boolean;
+  godMode: boolean;
   hud: HudSnapshot | null;
   engine: GameEngine | null;
   matchPlayers: MatchPlayer[];
@@ -76,6 +78,8 @@ interface GameStore {
   setShopOpen: (v: boolean) => void;
   setEmoteOpen: (v: boolean) => void;
   setPaused: (v: boolean) => void;
+  unlockSuperPlayer: () => void;
+  setGodMode: (enabled: boolean) => void;
   setSetting: <K extends keyof GameStore>(k: K, v: GameStore[K]) => void;
   setHud: (h: HudSnapshot) => void;
   setEngine: (e: GameEngine | null) => void;
@@ -100,6 +104,8 @@ export const useGame = create<GameStore>((set) => ({
   quality: "media",
   sensitivity: 1,
   vibration: true,
+  superPlayerUnlocked: false,
+  godMode: false,
   hud: null,
   engine: null,
   matchPlayers: [],
@@ -136,6 +142,8 @@ export const useGame = create<GameStore>((set) => ({
   setShopOpen: (shopOpen) => set({ shopOpen }),
   setEmoteOpen: (emoteOpen) => set({ emoteOpen }),
   setPaused: (paused) => set({ paused }),
+  unlockSuperPlayer: () => set({ superPlayerUnlocked: true }),
+  setGodMode: (godMode) => set({ godMode }),
   setSetting: (k, v) => set({ [k]: v } as never),
   setHud: (hud) => set({ hud }),
   setEngine: (engine) => set({ engine }),

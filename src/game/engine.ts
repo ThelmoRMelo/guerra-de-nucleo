@@ -58,6 +58,7 @@ export interface RemotePlayerState {
   pos_z: number;
   yaw: number;
   moving: boolean;
+  godMode?: boolean;
 }
 
 export class GameEngine {
@@ -71,6 +72,7 @@ export class GameEngine {
   difficulty: Difficulty = "normal";
   /** Regra de sala definida pelo anfitrião: humanos podem restaurar seus núcleos. */
   coreRestorationEnabled = true;
+  godMode = false;
   playerId = "p0";
   private genDiamondTimers: number[] = [];
   private centerTimer = 0;
@@ -90,6 +92,7 @@ export class GameEngine {
     fillEmptySlotsWithBots = true,
     localNetworkPlayerId = "",
     playerSkin: SkinId = "classico",
+    godMode = false,
   ) {
     this.difficulty = difficulty;
     this.coreRestorationEnabled = coreRestorationEnabled;
@@ -118,6 +121,7 @@ export class GameEngine {
       this.participants.push(participant);
     }
     for (const p of this.participants) if (p.isBot) ensureBrain(p, p.island);
+    if (godMode) this.enableGodMode();
     this.genDiamondTimers = ISLANDS.map(() => Math.random() * 2);
   }
 
@@ -135,6 +139,7 @@ export class GameEngine {
       eliminated: false,
       coreHp: TUNING.coreMaxHp,
       coreRestorations: 0,
+      godMode: false,
       pos: { ...isl.spawn },
       vel: { x: 0, y: 0, z: 0 },
       yaw: Math.atan2(Math.cos(isl.angle), Math.sin(isl.angle)),
@@ -168,6 +173,22 @@ export class GameEngine {
     return this.participants.find((p) => p.id === this.playerId)!;
   }
 
+  /** Ativa benefícios locais antes de a partida começar. */
+  enableGodMode() {
+    this.godMode = true;
+    const p = this.player;
+    p.godMode = true;
+    p.coreHp = TUNING.coreMaxHp;
+    p.hp = TUNING.playerMaxHp;
+    p.diamond = 9999;
+    p.owned = Object.keys(WEAPONS) as WeaponId[];
+    p.weapon = "sniper";
+    p.upgrades = Object.fromEntries(
+      Object.entries(UPGRADES).map(([id, upgrade]) => [id, upgrade.maxLevel]),
+    ) as Record<UpgradeId, number>;
+    p.ammo = this.magazineOf(p);
+  }
+
   /** Aplica a posição recebida do dono do personagem, sem afetar o jogador local. */
   applyRemotePlayerState(state: RemotePlayerState) {
     const participant = this.participants.find(
@@ -186,13 +207,14 @@ export class GameEngine {
     participant.networkTargetPos = target;
     participant.networkTargetYaw = state.yaw;
     participant.moving = state.moving;
+    participant.godMode = Boolean(state.godMode);
   }
 
   /** Replica um dano já confirmado pelo jogador que atirou, sem recalcular armadura. */
   applyNetworkDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
     const target = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
     const source = this.participants.find((p) => !p.isBot && p.networkPlayerId === sourcePlayerId) ?? null;
-    if (!target || !target.alive || target.eliminated || target.protectedUntil > this.time) return;
+    if (!target || target.godMode || !target.alive || target.eliminated || target.protectedUntil > this.time) return;
     target.hp = Math.max(0, target.hp - amount);
     target.lastDamageAt = this.time;
     if (target.id === this.playerId) this.onSound?.("hurt");
@@ -202,7 +224,7 @@ export class GameEngine {
   /** Replica dano de núcleo confirmado pelo atirador para todos os participantes. */
   applyNetworkCoreDamage(targetPlayerId: string, amount: number, sourcePlayerId: string) {
     const owner = this.participants.find((p) => !p.isBot && p.networkPlayerId === targetPlayerId);
-    if (!owner || owner.coreHp <= 0) return;
+    if (!owner || owner.godMode || owner.coreHp <= 0) return;
     owner.coreHp = Math.max(0, owner.coreHp - amount);
     if (owner.coreHp <= 0) {
       this.onSound?.("core");
@@ -430,11 +452,11 @@ export class GameEngine {
       };
     };
     for (const o of this.participants) {
-      if (o.id !== shooter.id && o.alive && !o.eliminated && o.protectedUntil < this.time) {
+      if (o.id !== shooter.id && !o.godMode && o.alive && !o.eliminated && o.protectedUntil < this.time) {
         const d = raySphere(origin, dir, { x: o.pos.x, y: o.pos.y + 1.1, z: o.pos.z }, 1.0);
         if (d !== null) consider(d, "player", o);
       }
-      if (o.id !== shooter.id && o.coreHp > 0) {
+      if (o.id !== shooter.id && !o.godMode && o.coreHp > 0) {
         const core = ISLANDS[o.island]!.core;
         const d = raySphere(origin, dir, { x: core.x, y: 1.5, z: core.z }, 1.7);
         if (d !== null) consider(d, "core", o);
@@ -449,7 +471,7 @@ export class GameEngine {
   }
 
   damagePlayer(target: Participant, amount: number, from: Participant) {
-    if (!target.alive || target.eliminated) return;
+    if (target.godMode || !target.alive || target.eliminated) return;
     if (target.protectedUntil > this.time) return;
     const reduced = amount * (1 - target.upgrades.armadura * 0.1);
     target.hp = Math.max(0, target.hp - reduced);
@@ -516,7 +538,7 @@ export class GameEngine {
   }
 
   damageCore(owner: Participant, amount: number, from: Participant) {
-    if (owner.coreHp <= 0) return;
+    if (owner.godMode || owner.coreHp <= 0) return;
     owner.coreHp = Math.max(0, owner.coreHp - amount);
     if (
       from.id === this.playerId &&
