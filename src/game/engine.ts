@@ -105,13 +105,14 @@ export class GameEngine {
     // O servidor já garante cores únicas. O motor preserva as cores recebidas e
     // nunca troca silenciosamente a cor de outro humano.
     const humans: HumanMatchParticipant[] = [{ playerId: localNetworkPlayerId, name: playerName, color: localColor, skin: playerSkin }];
-    for (const human of otherHumans) if (TEAM_COLORS.includes(human.color)) humans.push(human);
+    const activeColors = teamMode ? TEAM_COLORS.slice(0, 4) : TEAM_COLORS;
+    for (const human of otherHumans) if (activeColors.includes(human.color)) humans.push(human);
     const humanIslands = humans.map((human) => TEAM_COLORS.indexOf(human.color));
     const botIslands = teamMode
-      ? TEAM_COLORS.flatMap((_, island) => Array.from({ length: Math.max(0, 2 - humanIslands.filter((value) => value === island).length) }, () => island))
+      ? activeColors.flatMap((_, island) => Array.from({ length: Math.max(0, 2 - humanIslands.filter((value) => value === island).length) }, () => island))
       : TEAM_COLORS.map((_, island) => island).filter((island) => !humanIslands.includes(island));
     const botNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
-    const participantCount = fillEmptySlotsWithBots ? (teamMode ? 16 : 8) : humans.length;
+    const participantCount = fillEmptySlotsWithBots ? 8 : humans.length;
     for (let i = 0; i < participantCount; i++) {
       const human = i < humans.length;
       const island = human ? humanIslands[i]! : botIslands[i - humans.length]!;
@@ -237,7 +238,7 @@ export class GameEngine {
     if (!owner || owner.coreShieldMode || owner.coreHp <= 0) return;
     const nextCoreHp = Math.max(0, owner.coreHp - amount);
     for (const teammate of this.participants) if (teammate.island === owner.island) teammate.coreHp = nextCoreHp;
-    if (owner.coreHp <= 0) {
+    if (nextCoreHp <= 0) {
       this.onSound?.("core");
       this.pushEvent(`💥 NÚCLEO DE ${owner.name.toUpperCase()} DESTRUÍDO!`);
     }

@@ -183,7 +183,7 @@ export function Menu() {
   };
 
   const humanCount = players.length;
-  const slots = fillEmptySlotsWithBots ? (teamMode ? 16 : 8) : Math.max(humanCount, 1);
+  const slots = fillEmptySlotsWithBots ? 8 : Math.max(humanCount, 1);
   const colorUse = (color: string) => players.filter((player) => player.color === color).length;
   const myPlayerId = getLocalPlayerId();
 
@@ -396,7 +396,7 @@ export function Menu() {
                   {teamMode ? "Cada cor comporta até dois aliados." : "Escolha uma cor livre antes de a partida começar."}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {TEAM_COLORS.map((color) => {
+                  {(teamMode ? TEAM_COLORS.slice(0, 4) : TEAM_COLORS).map((color) => {
                     const occupiedByOther = colorUse(color) >= (teamMode ? 2 : 1) && color !== teamColor;
                     const selected = color === teamColor;
                     return (
@@ -421,10 +421,17 @@ export function Menu() {
               <p className="text-sm font-black">MODO DE JOGO</p>
               {isRoomHost ? (
                 <>
-                  <p className="mt-1 text-xs text-muted-foreground">Equipe permite duas pessoas por cor e até 16 participantes.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Equipe permite duas pessoas por cor, quatro equipes e até 8 participantes.</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[false, true].map((enabled) => (
-                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={() => { setTeamMode(enabled); pushSettings({ teamMode: enabled }); }}>
+                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={() => {
+                        if (enabled && !TEAM_COLORS.slice(0, 4).includes(teamColor)) {
+                          setLobbyError("Para Equipes, escolha uma das quatro cores de equipe acima.");
+                          return;
+                        }
+                        setTeamMode(enabled);
+                        pushSettings({ teamMode: enabled });
+                      }}>
                         {enabled ? "EQUIPES (2)" : "INDIVIDUAL"}
                       </button>
                     ))}
@@ -651,7 +658,7 @@ export function Menu() {
           <p className="mt-4 text-sm font-black">ESCOLHA SUA COR</p>
           <p className="mt-1 text-xs text-muted-foreground">{joinTeamMode ? "Cada cor aceita até duas pessoas." : "Cores ocupadas na sala ficam bloqueadas."}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {TEAM_COLORS.map((color) => {
+            {(joinTeamMode ? TEAM_COLORS.slice(0, 4) : TEAM_COLORS).map((color) => {
               const occupied = joinOccupiedColors.includes(color);
               const selected = joinColor === color;
               return (

@@ -15,9 +15,13 @@ BEGIN
   ) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_player_colors');
   END IF;
+  IF p_team_mode AND EXISTS (
+    SELECT 1 FROM room_players WHERE room_code = v_code
+    AND color <> ALL (ARRAY['#ff5470', '#3fb2ff', '#ffc93c', '#5ee6a8'])
+  ) THEN RETURN jsonb_build_object('ok', false, 'error', 'invalid_player_colors'); END IF;
   UPDATE rooms SET bot_difficulty = p_bot_difficulty, fill_with_bots = p_fill_with_bots,
     core_restoration = p_core_restoration, team_mode = p_team_mode,
-    max_players = CASE WHEN p_team_mode THEN 16 ELSE 8 END, updated_at = now()
+    max_players = 8, updated_at = now()
   WHERE code = v_code;
   RETURN jsonb_build_object('ok', true);
 END $$;
@@ -37,6 +41,7 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM room_players WHERE room_code = v_code) >= v_room.max_players THEN RETURN jsonb_build_object('ok', false, 'error', 'full'); END IF;
   SELECT count(*) INTO v_color_count FROM room_players WHERE room_code = v_code AND color = p_color;
+  IF v_room.team_mode AND p_color <> ALL (ARRAY['#ff5470', '#3fb2ff', '#ffc93c', '#5ee6a8']) THEN RETURN jsonb_build_object('ok', false, 'error', 'invalid_color'); END IF;
   IF v_color_count >= CASE WHEN v_room.team_mode THEN 2 ELSE 1 END THEN RETURN jsonb_build_object('ok', false, 'error', 'color_taken'); END IF;
   SELECT coalesce(max(slot) + 1, 0) INTO v_slot FROM room_players WHERE room_code = v_code;
   INSERT INTO room_players (room_code, player_id, name, color, slot, is_host) VALUES (v_code, p_player_id, p_name, p_color, v_slot, false);
@@ -50,6 +55,7 @@ BEGIN
   SELECT * INTO v_room FROM rooms WHERE code = v_code FOR UPDATE;
   IF NOT FOUND OR v_room.status <> 'lobby' THEN RETURN jsonb_build_object('ok', false, 'error', 'not_host_or_started'); END IF;
   SELECT count(*) INTO v_count FROM room_players WHERE room_code = v_code AND color = p_color AND player_id <> p_player_id;
+  IF v_room.team_mode AND p_color <> ALL (ARRAY['#ff5470', '#3fb2ff', '#ffc93c', '#5ee6a8']) THEN RETURN jsonb_build_object('ok', false, 'error', 'invalid_color'); END IF;
   IF v_count >= CASE WHEN v_room.team_mode THEN 2 ELSE 1 END THEN RETURN jsonb_build_object('ok', false, 'error', 'color_taken'); END IF;
   UPDATE room_players SET color = p_color, connected = true WHERE room_code = v_code AND player_id = p_player_id;
   RETURN jsonb_build_object('ok', true, 'color', p_color);
