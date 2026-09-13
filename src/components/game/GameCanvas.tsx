@@ -107,23 +107,24 @@ export function GameCanvas() {
   }, [setPaused, setShopOpen]);
 
 
-  const dpr: [number, number] = quality === "baixa" ? [0.6, 1] : quality === "media" ? [1, 1.5] : [1, 2];
+  const ultraQuality = quality === "ultra";
+  const dpr: [number, number] = ultraQuality ? [0.45, 0.7] : quality === "baixa" ? [0.6, 1] : quality === "media" ? [1, 1.5] : [1, 2];
 
   return (
     <div ref={wrapper} className="fixed inset-0 touch-none select-none overflow-hidden">
       <Canvas
-        shadows={quality !== "baixa"}
+        shadows={!ultraQuality && quality !== "baixa"}
         dpr={dpr}
-        camera={{ position: [0, 8, 12], fov: 62, far: 400 }}
-        gl={{ antialias: quality === "alta" }}
+        camera={{ position: [0, 8, 12], fov: 62, far: ultraQuality ? 220 : 400 }}
+        gl={{ antialias: quality === "alta", powerPreference: "high-performance", precision: ultraQuality ? "mediump" : "highp" }}
       >
         <color attach="background" args={["#9ad5f2"]} />
-        <fog attach="fog" args={["#a9dcf5", 90, 220]} />
+        <fog attach="fog" args={["#a9dcf5", ultraQuality ? 55 : 90, ultraQuality ? 150 : 220]} />
         <hemisphereLight args={["#cfefff", "#6b7a5a", 0.75]} />
         <directionalLight
           position={[45, 70, 30]}
           intensity={1.6}
-          castShadow={quality !== "baixa"}
+          castShadow={!ultraQuality && quality !== "baixa"}
           shadow-mapSize-width={quality === "alta" ? 2048 : 1024}
           shadow-mapSize-height={quality === "alta" ? 2048 : 1024}
           shadow-camera-left={-110}
@@ -131,10 +132,12 @@ export function GameCanvas() {
           shadow-camera-top={110}
           shadow-camera-bottom={-110}
         />
-        <Environment>
-          <Lightformer intensity={1.6} position={[0, 12, 0]} scale={[24, 24, 1]} />
-          <Lightformer intensity={0.7} color="#8fd0ff" position={[-14, 3, -6]} rotation-y={Math.PI / 2} scale={[30, 6, 1]} />
-        </Environment>
+        {!ultraQuality && (
+          <Environment>
+            <Lightformer intensity={1.6} position={[0, 12, 0]} scale={[24, 24, 1]} />
+            <Lightformer intensity={0.7} color="#8fd0ff" position={[-14, 3, -6]} rotation-y={Math.PI / 2} scale={[30, 6, 1]} />
+          </Environment>
+        )}
         <Scene engine={engine} />
       </Canvas>
       <HUD engine={engine} />

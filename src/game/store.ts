@@ -5,6 +5,14 @@ import { TEAM_COLORS, type SkinId } from "./config";
 
 export type Screen = "menu" | "howto" | "settings" | "lobby" | "match";
 export type BotDifficulty = "facil" | "normal" | "dificil";
+export type GraphicsQuality = "ultra" | "baixa" | "media" | "alta";
+
+const defaultGraphicsQuality: GraphicsQuality = (() => {
+  if (typeof navigator === "undefined") return "media";
+  const device = navigator as Navigator & { deviceMemory?: number };
+  const lowEndDevice = (navigator.hardwareConcurrency || 4) <= 4 || (device.deviceMemory ?? 8) <= 4;
+  return window.matchMedia("(pointer: coarse)").matches && lowEndDevice ? "ultra" : "media";
+})();
 
 export interface HudSnapshot {
   hp: number;
@@ -56,7 +64,7 @@ interface GameStore {
   paused: boolean;
   sfxVolume: number;
   musicVolume: number;
-  quality: "baixa" | "media" | "alta";
+  quality: GraphicsQuality;
   sensitivity: number;
   vibration: boolean;
   superPlayerUnlocked: boolean;
@@ -110,7 +118,7 @@ export const useGame = create<GameStore>((set) => ({
   paused: false,
   sfxVolume: 0.7,
   musicVolume: 0.4,
-  quality: "media",
+  quality: defaultGraphicsQuality,
   sensitivity: 1,
   vibration: true,
   superPlayerUnlocked: false,
