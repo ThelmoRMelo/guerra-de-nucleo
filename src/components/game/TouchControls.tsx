@@ -117,7 +117,8 @@ export function TouchControls() {
     };
   }, [isTouch]);
 
-  if (!isTouch || shopOpen) return null;
+ //(antigo) if (!isTouch || shopOpen) return null;
+  if (!isTouch || shopOpen || hud?.status !== "running") return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20">
