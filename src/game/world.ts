@@ -151,6 +151,11 @@ const pirateWallObstacles = [
   }),
 ];
 
+/** Colisores do navio oco, rochas e caveiras da arena Ilha Pirata. */
+export const PIRATE_OBSTACLES = pirateWallObstacles;
+
+
+
 /** Retorna true se a posição horizontal está sobre chão sólido (ilha, centro ou ponte). */
 export function isOnGround(x: number, z: number): boolean {
   const dc = Math.hypot(x, z);
