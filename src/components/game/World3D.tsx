@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { TUNING } from "@/game/config";
-import { ISLANDS } from "@/game/world";
+import { ISLANDS, PIRATE_PORTALS, PIRATE_SHIP, PIRATE_WALL_SEGMENTS } from "@/game/world";
 import type { ArenaMap } from "@/game/store";
 
 const GRASS = ["#63c66a", "#57bd8f", "#7ccf5e"];
@@ -172,40 +172,6 @@ function PirateShip() {
     <meshStandardMaterial color="#5b321b" roughness={0.9} />
   );
 
-  /*
-   * O navio possui 8 entradas:
-   *
-   * Norte:  NW / N / NE
-   * Sul:    SW / S / SE
-   * Leste:  E
-   * Oeste:  W
-   *
-   * As posições foram calculadas para coincidir com as 8 pontes radiais
-   * criadas acima.
-   */
-
-  const doorWidth = 6;
-  const wallHeight = 4;
-  const wallThickness = 1.2;
-
-  // Parede norte/sul: três portas em cada lado.
-  const northSouthSegments = [
-    { x: -31, width: 8 },
-    { x: -25.5, width: 3 },
-    { x: -17.5, width: 7 },
-    { x: -10, width: 5 },
-    { x: 10, width: 5 },
-    { x: 17.5, width: 7 },
-    { x: 25.5, width: 3 },
-    { x: 31, width: 8 },
-  ];
-
-  // Parede leste/oeste: uma porta central em cada lado.
-  const eastWestSegments = [
-    { z: -13.5, depth: 15 },
-    { z: 13.5, depth: 15 },
-  ];
-
   return (
     <group>
       {/* Convés */}
@@ -214,118 +180,29 @@ function PirateShip() {
         {woodMaterial}
       </mesh>
 
-      {/* ========================= */}
-      {/* PAREDES NORTE E SUL */}
-      {/* ========================= */}
-
-      {northSouthSegments.map((segment, i) => (
-        <group key={`ns-${i}`}>
-          <mesh
-            position={[
-              segment.x,
-              1.8,
-              -21,
-            ]}
-            castShadow
-          >
-            <boxGeometry
-              args={[
-                segment.width,
-                wallHeight,
-                wallThickness,
-              ]}
-            />
-            {wallMaterial}
-          </mesh>
-
-          <mesh
-            position={[
-              segment.x,
-              1.8,
-              21,
-            ]}
-            castShadow
-          >
-            <boxGeometry
-              args={[
-                segment.width,
-                wallHeight,
-                wallThickness,
-              ]}
-            />
-            {wallMaterial}
-          </mesh>
-        </group>
+      {/* Muralha sólida calculada como complemento exato dos oito portais. */}
+      {PIRATE_WALL_SEGMENTS.map((segment, index) => (
+        <mesh
+          key={`wall-${segment.side}-${index}`}
+          position={[segment.x, PIRATE_SHIP.wallHeight / 2 - 0.2, segment.z]}
+          rotation={[0, segment.rotation, 0]}
+          castShadow
+        >
+          <boxGeometry args={[segment.length, PIRATE_SHIP.wallHeight, PIRATE_SHIP.wallThickness]} />
+          {wallMaterial}
+        </mesh>
       ))}
 
-      {/* ========================= */}
-      {/* PAREDES LESTE E OESTE */}
-      {/* ========================= */}
-
-      {eastWestSegments.map((segment, i) => (
-        <group key={`ew-${i}`}>
-          <mesh
-            position={[
-              -35,
-              2.2,
-              segment.z,
-            ]}
-            castShadow
-          >
-            <boxGeometry
-              args={[
-                wallThickness,
-                4.8,
-                segment.depth,
-              ]}
-            />
-            {wallMaterial}
-          </mesh>
-
-          <mesh
-            position={[
-              35,
-              2.2,
-              segment.z,
-            ]}
-            castShadow
-          >
-            <boxGeometry
-              args={[
-                wallThickness,
-                4.8,
-                segment.depth,
-              ]}
-            />
-            {wallMaterial}
-          </mesh>
-        </group>
-      ))}
-
-      {/* ========================= */}
-      {/* MOLDURAS DAS 8 PORTAS */}
-      {/* ========================= */}
-
-      {[
-        [-21, -21, 0],
-        [0, -21, 0],
-        [21, -21, 0],
-
-        [-21, 21, Math.PI],
-        [0, 21, Math.PI],
-        [21, 21, Math.PI],
-
-        [-35, 0, Math.PI / 2],
-        [35, 0, -Math.PI / 2],
-      ].map(([x = 0, z = 0, rotation = 0], i) => (
+      {/* Molduras dos acessos, centradas nas mesmas direções radiais das pontes. */}
+      {PIRATE_PORTALS.map((portal) => (
         <group
-          key={`door-${i}`}
-          position={[x, 0, z]}
-          rotation={[0, rotation, 0]}
+          key={`door-${portal.index}`}
+          position={[portal.x, 0, portal.z]}
+          rotation={[0, portal.wallRotation, 0]}
         >
           {/* Pilar esquerdo */}
           <mesh
-            position={[-doorWidth / 2, 2.2, 0]}
+            position={[-portal.openingWidth / 2 - 0.4, 2.2, 0]}
             castShadow
           >
             <boxGeometry args={[0.8, 4.8, 1.5]} />
@@ -334,7 +211,7 @@ function PirateShip() {
 
           {/* Pilar direito */}
           <mesh
-            position={[doorWidth / 2, 2.2, 0]}
+            position={[portal.openingWidth / 2 + 0.4, 2.2, 0]}
             castShadow
           >
             <boxGeometry args={[0.8, 4.8, 1.5]} />
@@ -346,13 +223,13 @@ function PirateShip() {
             position={[0, 4.6, 0]}
             castShadow
           >
-            <boxGeometry args={[doorWidth + 1.6, 0.8, 1.5]} />
+            <boxGeometry args={[portal.openingWidth + 2.4, 0.8, 1.5]} />
             {wallMaterial}
           </mesh>
 
           {/* Tochas laterais */}
           <mesh
-            position={[-doorWidth / 2 - 0.7, 2.8, 0]}
+            position={[-portal.openingWidth / 2 - 1.1, 2.8, 0]}
             castShadow
           >
             <sphereGeometry args={[0.35, 8, 8]} />
@@ -364,7 +241,7 @@ function PirateShip() {
           </mesh>
 
           <mesh
-            position={[doorWidth / 2 + 0.7, 2.8, 0]}
+            position={[portal.openingWidth / 2 + 1.1, 2.8, 0]}
             castShadow
           >
             <sphereGeometry args={[0.35, 8, 8]} />
