@@ -33,20 +33,124 @@ export const CENTER_GEN: Vec3 = { x: 0, y: 0, z: 0 };
 
 /** Colisores do navio oco, rochas e caveiras da arena Ilha Pirata. */
 export const PIRATE_OBSTACLES = [
-  // Laterais do navio: o interior continua aberto pelas entradas das pontes.
-  { x: -34, z: -12, r: 3 }, { x: -34, z: 12, r: 3 },
-  { x: 34, z: -12, r: 3 }, { x: 34, z: 12, r: 3 },
-  { x: -20, z: -20, r: 2.2 }, { x: 20, z: -20, r: 2.2 },
-  { x: -20, z: 20, r: 2.2 }, { x: 20, z: 20, r: 2.2 },
+  /**
+ * Colisores da Ilha Pirata.
+ *
+ * As paredes são formadas por pequenos círculos sobrepostos.
+ * Os espaços das portas ficam deliberadamente sem colisores.
+ *
+ * Portas:
+ * Norte: -21 / 0 / +21
+ * Sul:   -21 / 0 / +21
+ * Leste: z = 0
+ * Oeste: z = 0
+ */
+
+const pirateWallObstacles = [
+  // ============================
+  // PAREDE NORTE
+  // Portas em x = -21, 0 e +21
+  // ============================
+
+  ...Array.from({ length: 7 }, (_, i) => ({
+    x: -32 + i * 3,
+    z: -21,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: -16 + i * 3,
+    z: -21,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: 16 + i * 3,
+    z: -21,
+    r: 2.1,
+  })),
+
+  // ============================
+  // PAREDE SUL
+  // Portas em x = -21, 0 e +21
+  // ============================
+
+  ...Array.from({ length: 7 }, (_, i) => ({
+    x: -32 + i * 3,
+    z: 21,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: -16 + i * 3,
+    z: 21,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: 16 + i * 3,
+    z: 21,
+    r: 2.1,
+  })),
+
+  // ============================
+  // PAREDE OESTE
+  // Porta em z = 0
+  // ============================
+
+  ...Array.from({ length: 3 }, (_, i) => ({
+    x: -35,
+    z: -7 + i * 3.5,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 3 }, (_, i) => ({
+    x: -35,
+    z: 3.5 + i * 3.5,
+    r: 2.1,
+  })),
+
+  // ============================
+  // PAREDE LESTE
+  // Porta em z = 0
+  // ============================
+
+  ...Array.from({ length: 3 }, (_, i) => ({
+    x: 35,
+    z: -7 + i * 3.5,
+    r: 2.1,
+  })),
+
+  ...Array.from({ length: 3 }, (_, i) => ({
+    x: 35,
+    z: 3.5 + i * 3.5,
+    r: 2.1,
+  })),
+
+  // ============================
+  // CAVEIRAS / OBSTÁCULOS INTERNOS
+  // ============================
+
   ...Array.from({ length: 10 }, (_, i) => {
     const a = i * 1.91;
     const r = 19 + (i % 2) * 7;
-    return { x: Math.cos(a) * r, z: Math.sin(a) * r, r: i % 3 === 0 ? 1.35 : 1.0 };
+
+    return {
+      x: Math.cos(a) * r,
+      z: Math.sin(a) * r,
+      r: i % 3 === 0 ? 1.35 : 1.0,
+    };
   }),
+
   ...Array.from({ length: 6 }, (_, i) => {
     const a = i * 1.91;
     const r = (19 + (i % 2) * 7) * 0.8;
-    return { x: Math.cos(a) * r, z: Math.sin(a) * r, r: 1.35 };
+
+    return {
+      x: Math.cos(a) * r,
+      z: Math.sin(a) * r,
+      r: 1.35,
+    };
   }),
 ];
 
