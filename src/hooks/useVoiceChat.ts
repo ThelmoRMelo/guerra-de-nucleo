@@ -66,7 +66,7 @@ export function useVoiceChat() {
         if (!audio) {
           audio = document.createElement("audio");
           audio.autoplay = true;
-          audio.playsInline = true;
+          (audio as HTMLAudioElement & { playsInline: boolean }).playsInline = true;
           audioRef.current.set(remoteId, audio);
           document.body.appendChild(audio);
         }
