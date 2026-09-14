@@ -54,8 +54,18 @@ export function useMatchPositionSync(engine: GameEngine) {
         coreShieldMode: player.coreShieldMode,
       };
     };
+    // As tabelas/RPC de posição existem no banco, mas ainda não nos tipos gerados.
+    const db = supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<unknown>;
+      from: (table: string) => {
+        select: (cols: string) => {
+          eq: (col: string, value: string) => PromiseLike<{ data: RemotePlayerState[] | null }>;
+        };
+      };
+    };
+
     const persist = (state: RemotePlayerState) => {
-      void supabase.rpc("update_room_player_state", {
+      void db.rpc("update_room_player_state", {
         p_code: roomCode,
         p_player_id: playerId,
         p_pos_x: state.pos_x,
@@ -66,11 +76,11 @@ export function useMatchPositionSync(engine: GameEngine) {
       });
     };
 
-    void supabase
+    void db
       .from("room_player_states")
       .select("room_code, player_id, pos_x, pos_y, pos_z, yaw, moving")
       .eq("room_code", roomCode)
-      .then(({ data }) => data?.forEach((state) => apply(state as RemotePlayerState)));
+      .then(({ data }) => data?.forEach((state) => apply(state)));
 
     const channel = supabase
       .channel(`match-position:${roomCode}`)
