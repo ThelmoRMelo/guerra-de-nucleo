@@ -30,7 +30,6 @@ export const ISLANDS: IslandLayout[] = Array.from({ length: 8 }, (_, i) => {
 });
 
 export const CENTER_GEN: Vec3 = { x: 0, y: 0, z: 0 };
-export const PIRATE_OBSTACLES = [
 /**
  * Colisores da Ilha Pirata.
  *
