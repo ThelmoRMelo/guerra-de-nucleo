@@ -317,7 +317,7 @@ function PirateShip() {
 
         [-35, 0, Math.PI / 2],
         [35, 0, -Math.PI / 2],
-      ].map(([x, z, rotation], i) => (
+      ].map(([x = 0, z = 0, rotation = 0], i) => (
         <group
           key={`door-${i}`}
           position={[x, 0, z]}

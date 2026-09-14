@@ -81,9 +81,9 @@ export class GameEngine {
   onEvent?: (text: string) => void;
   onSound?: (name: string) => void;
   /** Emite um acerto causado pelo jogador local contra outro humano da sala. */
-  onHumanDamage?: (targetPlayerId: string, amount: number, sourcePlayerId: string) => void;
+  onHumanDamage?: ((targetPlayerId: string, amount: number, sourcePlayerId: string) => void) | undefined;
   /** Emite dano ao núcleo de outro humano para todos os clientes da sala. */
-  onHumanCoreDamage?: (targetPlayerId: string, amount: number, sourcePlayerId: string) => void;
+  onHumanCoreDamage?: ((targetPlayerId: string, amount: number, sourcePlayerId: string) => void) | undefined;
 
   constructor(
     playerName: string,

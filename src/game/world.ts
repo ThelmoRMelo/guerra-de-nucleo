@@ -31,9 +31,7 @@ export const ISLANDS: IslandLayout[] = Array.from({ length: 8 }, (_, i) => {
 
 export const CENTER_GEN: Vec3 = { x: 0, y: 0, z: 0 };
 
-/** Colisores do navio oco, rochas e caveiras da arena Ilha Pirata. */
-export const PIRATE_OBSTACLES = [
-  /**
+/**
  * Colisores da Ilha Pirata.
  *
  * As paredes são formadas por pequenos círculos sobrepostos.
@@ -45,7 +43,6 @@ export const PIRATE_OBSTACLES = [
  * Leste: z = 0
  * Oeste: z = 0
  */
-
 const pirateWallObstacles = [
   // ============================
   // PAREDE NORTE
@@ -153,6 +150,11 @@ const pirateWallObstacles = [
     };
   }),
 ];
+
+/** Colisores do navio oco, rochas e caveiras da arena Ilha Pirata. */
+export const PIRATE_OBSTACLES = pirateWallObstacles;
+
+
 
 /** Retorna true se a posição horizontal está sobre chão sólido (ilha, centro ou ponte). */
 export function isOnGround(x: number, z: number): boolean {
