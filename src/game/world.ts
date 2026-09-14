@@ -30,98 +30,136 @@ export const ISLANDS: IslandLayout[] = Array.from({ length: 8 }, (_, i) => {
 });
 
 export const CENTER_GEN: Vec3 = { x: 0, y: 0, z: 0 };
+
+export const PIRATE_SHIP = {
+  halfWidth: 35,
+  halfDepth: 21,
+  wallHeight: 4.8,
+  wallThickness: 1.2,
+  portalHeight: 4.8,
+  portalClearance: 1.5,
+} as const;
+
+export type PirateWallSide = "north" | "south" | "east" | "west";
+
+export interface PiratePortal {
+  index: number;
+  angle: number;
+  side: PirateWallSide;
+  x: number;
+  z: number;
+  openingWidth: number;
+  wallRotation: number;
+}
+
+/**
+ * Interseções exatas das oito linhas radiais das pontes com a muralha do navio.
+ * A largura considera a projeção da ponte sobre a parede e uma pequena folga.
+ */
+export const PIRATE_PORTALS: PiratePortal[] = ISLANDS.map((island) => {
+  const cos = Math.cos(island.angle);
+  const sin = Math.sin(island.angle);
+  const horizontalDistance = Math.abs(cos) > 0.0001 ? PIRATE_SHIP.halfWidth / Math.abs(cos) : Infinity;
+  const verticalDistance = Math.abs(sin) > 0.0001 ? PIRATE_SHIP.halfDepth / Math.abs(sin) : Infinity;
+
+  if (verticalDistance <= horizontalDistance) {
+    return {
+      index: island.index,
+      angle: island.angle,
+      side: sin < 0 ? "north" : "south",
+      x: cos * verticalDistance,
+      z: sin < 0 ? -PIRATE_SHIP.halfDepth : PIRATE_SHIP.halfDepth,
+      openingWidth: TUNING.bridgeWidth / Math.abs(sin) + PIRATE_SHIP.portalClearance,
+      wallRotation: 0,
+    };
+  }
+
+  return {
+    index: island.index,
+    angle: island.angle,
+    side: cos < 0 ? "west" : "east",
+    x: cos < 0 ? -PIRATE_SHIP.halfWidth : PIRATE_SHIP.halfWidth,
+    z: sin * horizontalDistance,
+    openingWidth: TUNING.bridgeWidth / Math.abs(cos) + PIRATE_SHIP.portalClearance,
+    wallRotation: Math.PI / 2,
+  };
+});
+
+export interface PirateWallSegment {
+  side: PirateWallSide;
+  x: number;
+  z: number;
+  length: number;
+  rotation: number;
+}
+
+function buildWallSegments(side: PirateWallSide): PirateWallSegment[] {
+  const horizontal = side === "north" || side === "south";
+  const halfLength = horizontal ? PIRATE_SHIP.halfWidth : PIRATE_SHIP.halfDepth;
+  const portals = PIRATE_PORTALS
+    .filter((portal) => portal.side === side)
+    .map((portal) => ({
+      center: horizontal ? portal.x : portal.z,
+      halfOpening: portal.openingWidth / 2,
+    }))
+    .sort((a, b) => a.center - b.center);
+  const segments: PirateWallSegment[] = [];
+  let cursor = -halfLength;
+
+  for (const portal of portals) {
+    const end = Math.max(cursor, portal.center - portal.halfOpening);
+    if (end > cursor) {
+      const center = (cursor + end) / 2;
+      segments.push({
+        side,
+        x: horizontal ? center : side === "west" ? -PIRATE_SHIP.halfWidth : PIRATE_SHIP.halfWidth,
+        z: horizontal ? (side === "north" ? -PIRATE_SHIP.halfDepth : PIRATE_SHIP.halfDepth) : center,
+        length: end - cursor,
+        rotation: horizontal ? 0 : Math.PI / 2,
+      });
+    }
+    cursor = Math.min(halfLength, portal.center + portal.halfOpening);
+  }
+
+  if (cursor < halfLength) {
+    const center = (cursor + halfLength) / 2;
+    segments.push({
+      side,
+      x: horizontal ? center : side === "west" ? -PIRATE_SHIP.halfWidth : PIRATE_SHIP.halfWidth,
+      z: horizontal ? (side === "north" ? -PIRATE_SHIP.halfDepth : PIRATE_SHIP.halfDepth) : center,
+      length: halfLength - cursor,
+      rotation: horizontal ? 0 : Math.PI / 2,
+    });
+  }
+
+  return segments;
+}
+
+/** Trechos sólidos da muralha; os intervalos ausentes são exatamente os oito portais. */
+export const PIRATE_WALL_SEGMENTS: PirateWallSegment[] = (
+  ["north", "south", "east", "west"] as PirateWallSide[]
+).flatMap(buildWallSegments);
+
 /**
  * Colisores da Ilha Pirata.
  *
- * As paredes são formadas por pequenos círculos sobrepostos.
- * Os espaços das portas ficam deliberadamente sem colisores.
- *
- * Portas:
- * Norte: -21 / 0 / +21
- * Sul:   -21 / 0 / +21
- * Leste: z = 0
- * Oeste: z = 0
+ * Cada trecho visual sólido recebe uma sequência contínua de círculos.
+ * Como visual e colisão usam PIRATE_WALL_SEGMENTS, não existem paredes
+ * invisíveis nos portais nem brechas atravessáveis nas partes fechadas.
  */
 const pirateWallObstacles = [
-  // ============================
-  // PAREDE NORTE
-  // Portas em x = -21, 0 e +21
-  // ============================
-
-  ...Array.from({ length: 7 }, (_, i) => ({
-    x: -32 + i * 3,
-    z: -21,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 4 }, (_, i) => ({
-    x: -16 + i * 3,
-    z: -21,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 4 }, (_, i) => ({
-    x: 16 + i * 3,
-    z: -21,
-    r: 2.1,
-  })),
-
-  // ============================
-  // PAREDE SUL
-  // Portas em x = -21, 0 e +21
-  // ============================
-
-  ...Array.from({ length: 7 }, (_, i) => ({
-    x: -32 + i * 3,
-    z: 21,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 4 }, (_, i) => ({
-    x: -16 + i * 3,
-    z: 21,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 4 }, (_, i) => ({
-    x: 16 + i * 3,
-    z: 21,
-    r: 2.1,
-  })),
-
-  // ============================
-  // PAREDE OESTE
-  // Porta em z = 0
-  // ============================
-
-  ...Array.from({ length: 3 }, (_, i) => ({
-    x: -35,
-    z: -7 + i * 3.5,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 3 }, (_, i) => ({
-    x: -35,
-    z: 3.5 + i * 3.5,
-    r: 2.1,
-  })),
-
-  // ============================
-  // PAREDE LESTE
-  // Porta em z = 0
-  // ============================
-
-  ...Array.from({ length: 3 }, (_, i) => ({
-    x: 35,
-    z: -7 + i * 3.5,
-    r: 2.1,
-  })),
-
-  ...Array.from({ length: 3 }, (_, i) => ({
-    x: 35,
-    z: 3.5 + i * 3.5,
-    r: 2.1,
-  })),
+  ...PIRATE_WALL_SEGMENTS.flatMap((segment) => {
+    const radius = PIRATE_SHIP.wallThickness / 2;
+    const count = Math.max(1, Math.ceil(segment.length / (radius * 2)));
+    return Array.from({ length: count }, (_, index) => {
+      const offset = -segment.length / 2 + ((index + 0.5) * segment.length) / count;
+      return {
+        x: segment.rotation === 0 ? segment.x + offset : segment.x,
+        z: segment.rotation === 0 ? segment.z : segment.z + offset,
+        r: radius,
+      };
+    });
+  }),
 
   // ============================
   // CAVEIRAS / OBSTÁCULOS INTERNOS
