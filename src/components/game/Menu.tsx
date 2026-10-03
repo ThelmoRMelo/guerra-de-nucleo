@@ -152,19 +152,25 @@ export function Menu() {
     setScreen("lobby");
   };
 
-  const pushSettings = (next: {
+  const pushSettings = async (next: {
     botDifficulty?: typeof botDifficulty;
     fillWithBots?: boolean;
     coreRestoration?: boolean;
     teamMode?: boolean;
   }) => {
-    if (!isRoomHost || !roomCode) return;
-    void updateRoomSettings(roomCode, getLocalPlayerId(), {
+    if (!isRoomHost || !roomCode) return false;
+    const res = await updateRoomSettings(roomCode, getLocalPlayerId(), {
       botDifficulty: next.botDifficulty ?? botDifficulty,
       fillWithBots: next.fillWithBots ?? fillEmptySlotsWithBots,
       coreRestoration: next.coreRestoration ?? coreRestorationEnabled,
       teamMode: next.teamMode ?? teamMode,
     });
+    if (!res.ok) {
+      setLobbyError(roomErrorMessage(res.error));
+      return false;
+    }
+    setLobbyError("");
+    return true;
   };
 
   const startRoom = async () => {
@@ -445,13 +451,12 @@ export function Menu() {
                   <p className="mt-1 text-xs text-muted-foreground">Equipe permite duas pessoas por cor, quatro equipes e até 8 participantes.</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[false, true].map((enabled) => (
-                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={() => {
+                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={async () => {
                         if (enabled && !TEAM_COLORS.slice(0, 4).includes(teamColor)) {
                           setLobbyError("Para Equipes, escolha uma das quatro cores de equipe acima.");
                           return;
                         }
-                        setTeamMode(enabled);
-                        pushSettings({ teamMode: enabled });
+                        if (await pushSettings({ teamMode: enabled })) setTeamMode(enabled);
                       }}>
                         {enabled ? "EQUIPES (2)" : "INDIVIDUAL"}
                       </button>
@@ -477,9 +482,8 @@ export function Menu() {
                             ? "bg-primary text-primary-foreground"
                             : "bg-background text-muted-foreground"
                         }`}
-                        onClick={() => {
-                          setCoreRestorationEnabled(on);
-                          pushSettings({ coreRestoration: on });
+                        onClick={async () => {
+                          if (await pushSettings({ coreRestoration: on })) setCoreRestorationEnabled(on);
                         }}
                       >
                         {on ? "ON" : "OFF"}
@@ -510,9 +514,8 @@ export function Menu() {
                             ? "bg-primary text-primary-foreground"
                             : "bg-background text-muted-foreground"
                         }`}
-                        onClick={() => {
-                          setFillEmptySlotsWithBots(on);
-                          pushSettings({ fillWithBots: on });
+                        onClick={async () => {
+                          if (await pushSettings({ fillWithBots: on })) setFillEmptySlotsWithBots(on);
                         }}
                       >
                         {on ? "ON" : "OFF"}
@@ -545,9 +548,8 @@ export function Menu() {
                           ? "bg-primary text-primary-foreground"
                           : "bg-background text-muted-foreground"
                       }`}
-                      onClick={() => {
-                        setBotDifficulty(value);
-                        pushSettings({ botDifficulty: value });
+                      onClick={async () => {
+                        if (await pushSettings({ botDifficulty: value })) setBotDifficulty(value);
                       }}
                     >
                       {label}

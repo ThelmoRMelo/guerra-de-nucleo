@@ -46,9 +46,20 @@ export function randomRoomCode() {
 type RpcResult = { ok: boolean; error?: string; status?: string; color?: string };
 
 async function callRpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
-  const { data, error } = await supabase.rpc(fn as never, args as never);
-  if (error) return { ok: false, error: "network" };
-  return (data ?? { ok: false, error: "network" }) as RpcResult;
+  try {
+    const { data, error } = await supabase.rpc(fn as never, args as never);
+    if (error) {
+      console.error("[Room RPC]", fn, error);
+      return { ok: false, error: error.message || error.code || "network" };
+    }
+    return (data ?? { ok: false, error: "network" }) as RpcResult;
+  } catch (error) {
+    console.error("[Room RPC]", fn, error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "network",
+    };
+  }
 }
 
 export const ROOM_ERRORS: Record<string, string> = {
@@ -65,7 +76,7 @@ export const ROOM_ERRORS: Record<string, string> = {
 };
 
 export function roomErrorMessage(code?: string) {
-  return (code && ROOM_ERRORS[code]) || ROOM_ERRORS["network"]!;
+  return (code && (ROOM_ERRORS[code] || code)) || ROOM_ERRORS["network"]!;
 }
 
 export async function createRoom(opts: {
@@ -116,7 +127,7 @@ export function updateRoomSettings(
   settings: { botDifficulty: BotDifficulty; fillWithBots: boolean; coreRestoration: boolean; teamMode: boolean },
 ) {
   return callRpc("update_room_settings", {
-    p_code: code,
+    p_code: code.toUpperCase(),
     p_host_id: hostId,
     p_bot_difficulty: settings.botDifficulty,
     p_fill_with_bots: settings.fillWithBots,
