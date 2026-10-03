@@ -1,9 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchRoom, fetchRoomPlayers, type RoomPlayerRow, type RoomRow } from "@/lib/room";
+import { fetchConfirmedMatchPlayers, fetchRoom, fetchRoomPlayers, getLocalPlayerId, type RoomPlayerRow, type RoomRow } from "@/lib/room";
 import { useGame } from "@/game/store";
 
 export type RoomConnection = "conectando" | "online" | "offline";
+
+const pendingMatchStarts = new Map<string, Promise<void>>();
+
+export function startConfirmedRoomMatch(code: string): Promise<void> {
+  const existing = pendingMatchStarts.get(code);
+  if (existing) return existing;
+  const pending = (async () => {
+    const players = await fetchConfirmedMatchPlayers(code);
+    const state = useGame.getState();
+    if (state.roomCode !== code || state.screen !== "lobby") return;
+    const localPlayer = players.find((player) => player.player_id === getLocalPlayerId());
+    if (!localPlayer) throw new Error("Seu jogador não está mais nesta sala.");
+    useGame.setState({
+      teamColor: localPlayer.color,
+      matchPlayers: players.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
+    });
+    useGame.getState().startMatch();
+  })().finally(() => pendingMatchStarts.delete(code));
+  pendingMatchStarts.set(code, pending);
+  return pending;
+}
 
 /**
  * Mantém o lobby sincronizado com o servidor em tempo real.
@@ -39,7 +60,11 @@ export function useRoomSync(code: string, active: boolean) {
       }
       if (r.status === "started" && !startedRef.current) {
         startedRef.current = true;
-        useGame.getState().startMatch();
+        void startConfirmedRoomMatch(code).catch((error: unknown) => {
+          if (cancelled) return;
+          startedRef.current = false;
+          setNotice(error instanceof Error ? error.message : "Falha ao carregar os jogadores. Tentando novamente.");
+        });
       }
     };
 
@@ -52,9 +77,11 @@ export function useRoomSync(code: string, active: boolean) {
         return;
       }
       setPlayers(p);
-      useGame.getState().setMatchPlayers(
-        p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
-      );
+      if (!startedRef.current && useGame.getState().screen === "lobby" && r.status === "lobby") {
+        useGame.getState().setMatchPlayers(
+          p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
+        );
+      }
       apply(r);
     };
 
@@ -74,9 +101,11 @@ export function useRoomSync(code: string, active: boolean) {
           void fetchRoomPlayers(code).then((p) => {
             if (cancelled) return;
             setPlayers(p);
-            useGame.getState().setMatchPlayers(
-              p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
-            );
+            if (!startedRef.current && useGame.getState().screen === "lobby") {
+              useGame.getState().setMatchPlayers(
+                p.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })),
+              );
+            }
           });
         },
       )

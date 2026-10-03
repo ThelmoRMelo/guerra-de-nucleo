@@ -4,7 +4,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { World3D } from "./World3D";
 import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
-import { useRoomSync } from "@/hooks/useRoomSync";
+import { startConfirmedRoomMatch, useRoomSync } from "@/hooks/useRoomSync";
 import {
   createRoom,
   fetchRoom,
@@ -168,16 +168,20 @@ export function Menu() {
   };
 
   const startRoom = async () => {
-    if (!isRoomHost) return;
+    if (!isRoomHost || busy) return;
     setBusy(true);
-    const res = await startRoomMatch(roomCode, getLocalPlayerId());
-    setBusy(false);
-    if (!res.ok) {
-      setLobbyError(roomErrorMessage(res.error));
-      return;
+    try {
+      const res = await startRoomMatch(roomCode, getLocalPlayerId());
+      if (!res.ok) {
+        setLobbyError(roomErrorMessage(res.error));
+        return;
+      }
+      await startConfirmedRoomMatch(roomCode);
+    } catch (error: unknown) {
+      setLobbyError(error instanceof Error ? error.message : roomErrorMessage("network"));
+    } finally {
+      setBusy(false);
     }
-    setMatchPlayers(players.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })));
-    startMatch();
   };
 
   const exitLobby = async () => {
