@@ -150,6 +150,6 @@ export async function fetchRoomPlayers(code: string) {
 /** Do not replace confirmed players with an empty list after a failed read. */
 export async function fetchConfirmedMatchPlayers(code: string): Promise<RoomPlayerRow[]> {
   const { data, error } = await supabase.from("room_players").select("*").eq("room_code", code).order("slot", { ascending: true });
-  if (error || !data?.length) throw new Error(ROOM_ERRORS.network);
+  if (error || !data?.length) throw new Error(ROOM_ERRORS["network"]);
   return data as RoomPlayerRow[];
 }
