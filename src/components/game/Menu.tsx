@@ -177,12 +177,22 @@ export function Menu() {
     if (!isRoomHost) return;
     setBusy(true);
     const res = await startRoomMatch(roomCode, getLocalPlayerId());
-    setBusy(false);
     if (!res.ok) {
+      setBusy(false);
       setLobbyError(roomErrorMessage(res.error));
       return;
     }
-    setMatchPlayers(players.map((player) => ({ playerId: player.player_id, name: player.name, color: player.color })));
+    // A RPC de início bloqueia novas trocas de cor. Buscamos então o estado
+    // confirmado pelo banco para não iniciar com uma lista antiga do lobby.
+    const startedPlayers = await fetchRoomPlayers(roomCode);
+    setMatchPlayers(
+      startedPlayers.map((player) => ({
+        playerId: player.player_id,
+        name: player.name,
+        color: player.color,
+      })),
+    );
+    setBusy(false);
     startMatch();
   };
 
