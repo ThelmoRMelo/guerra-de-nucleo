@@ -47,7 +47,15 @@ type RpcResult = { ok: boolean; error?: string; status?: string; color?: string 
 
 async function callRpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
   const { data, error } = await supabase.rpc(fn as never, args as never);
-  if (error) return { ok: false, error: "network" };
+
+  if (error) {
+    console.error(`[RPC ${fn}]`, error);
+    return {
+      ok: false,
+      error: error.message || "network",
+    };
+  }
+
   return (data ?? { ok: false, error: "network" }) as RpcResult;
 }
 
