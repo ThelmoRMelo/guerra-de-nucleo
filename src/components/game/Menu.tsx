@@ -4,7 +4,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { World3D } from "./World3D";
 import { SKINS, TEAM_COLORS } from "@/game/config";
 import { useGame } from "@/game/store";
-import { useRoomSync } from "@/hooks/useRoomSync";
+import { startConfirmedRoomMatch, useRoomSync } from "@/hooks/useRoomSync";
 import {
   createRoom,
   fetchRoom,
@@ -152,48 +152,36 @@ export function Menu() {
     setScreen("lobby");
   };
 
-  const pushSettings = async (next: {
+  const pushSettings = (next: {
     botDifficulty?: typeof botDifficulty;
     fillWithBots?: boolean;
     coreRestoration?: boolean;
     teamMode?: boolean;
   }) => {
-    if (!isRoomHost || !roomCode) return false;
-    const res = await updateRoomSettings(roomCode, getLocalPlayerId(), {
+    if (!isRoomHost || !roomCode) return;
+    void updateRoomSettings(roomCode, getLocalPlayerId(), {
       botDifficulty: next.botDifficulty ?? botDifficulty,
       fillWithBots: next.fillWithBots ?? fillEmptySlotsWithBots,
       coreRestoration: next.coreRestoration ?? coreRestorationEnabled,
       teamMode: next.teamMode ?? teamMode,
     });
-    if (!res.ok) {
-      setLobbyError(roomErrorMessage(res.error));
-      return false;
-    }
-    setLobbyError("");
-    return true;
   };
 
   const startRoom = async () => {
-    if (!isRoomHost) return;
+    if (!isRoomHost || busy) return;
     setBusy(true);
-    const res = await startRoomMatch(roomCode, getLocalPlayerId());
-    if (!res.ok) {
+    try {
+      const res = await startRoomMatch(roomCode, getLocalPlayerId());
+      if (!res.ok) {
+        setLobbyError(roomErrorMessage(res.error));
+        return;
+      }
+      await startConfirmedRoomMatch(roomCode);
+    } catch (error: unknown) {
+      setLobbyError(error instanceof Error ? error.message : roomErrorMessage("network"));
+    } finally {
       setBusy(false);
-      setLobbyError(roomErrorMessage(res.error));
-      return;
     }
-    // A RPC de início bloqueia novas trocas de cor. Buscamos então o estado
-    // confirmado pelo banco para não iniciar com uma lista antiga do lobby.
-    const startedPlayers = await fetchRoomPlayers(roomCode);
-    setMatchPlayers(
-      startedPlayers.map((player) => ({
-        playerId: player.player_id,
-        name: player.name,
-        color: player.color,
-      })),
-    );
-    setBusy(false);
-    startMatch();
   };
 
   const exitLobby = async () => {
@@ -461,12 +449,13 @@ export function Menu() {
                   <p className="mt-1 text-xs text-muted-foreground">Equipe permite duas pessoas por cor, quatro equipes e até 8 participantes.</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[false, true].map((enabled) => (
-                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={async () => {
+                      <button key={String(enabled)} className={`rounded-lg px-2 py-2 text-xs font-black ${teamMode === enabled ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`} onClick={() => {
                         if (enabled && !TEAM_COLORS.slice(0, 4).includes(teamColor)) {
                           setLobbyError("Para Equipes, escolha uma das quatro cores de equipe acima.");
                           return;
                         }
-                        if (await pushSettings({ teamMode: enabled })) setTeamMode(enabled);
+                        setTeamMode(enabled);
+                        pushSettings({ teamMode: enabled });
                       }}>
                         {enabled ? "EQUIPES (2)" : "INDIVIDUAL"}
                       </button>
@@ -492,8 +481,9 @@ export function Menu() {
                             ? "bg-primary text-primary-foreground"
                             : "bg-background text-muted-foreground"
                         }`}
-                        onClick={async () => {
-                          if (await pushSettings({ coreRestoration: on })) setCoreRestorationEnabled(on);
+                        onClick={() => {
+                          setCoreRestorationEnabled(on);
+                          pushSettings({ coreRestoration: on });
                         }}
                       >
                         {on ? "ON" : "OFF"}
@@ -524,8 +514,9 @@ export function Menu() {
                             ? "bg-primary text-primary-foreground"
                             : "bg-background text-muted-foreground"
                         }`}
-                        onClick={async () => {
-                          if (await pushSettings({ fillWithBots: on })) setFillEmptySlotsWithBots(on);
+                        onClick={() => {
+                          setFillEmptySlotsWithBots(on);
+                          pushSettings({ fillWithBots: on });
                         }}
                       >
                         {on ? "ON" : "OFF"}
@@ -558,8 +549,9 @@ export function Menu() {
                           ? "bg-primary text-primary-foreground"
                           : "bg-background text-muted-foreground"
                       }`}
-                      onClick={async () => {
-                        if (await pushSettings({ botDifficulty: value })) setBotDifficulty(value);
+                      onClick={() => {
+                        setBotDifficulty(value);
+                        pushSettings({ botDifficulty: value });
                       }}
                     >
                       {label}

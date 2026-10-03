@@ -69,7 +69,6 @@ export type Database = {
           max_players: number
           started_at: string | null
           status: string
-          team_mode: boolean
           updated_at: string
         }
         Insert: {
@@ -82,7 +81,6 @@ export type Database = {
           max_players?: number
           started_at?: string | null
           status?: string
-          team_mode?: boolean
           updated_at?: string
         }
         Update: {
@@ -95,7 +93,6 @@ export type Database = {
           max_players?: number
           started_at?: string | null
           status?: string
-          team_mode?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -134,14 +131,6 @@ export type Database = {
         Args: { p_code: string; p_host_id: string }
         Returns: Json
       }
-      update_room_player_color: {
-        Args: {
-          p_code: string
-          p_color: string
-          p_player_id: string
-        }
-        Returns: Json
-      }
       update_room_settings: {
         Args: {
           p_bot_difficulty: string
@@ -149,7 +138,6 @@ export type Database = {
           p_core_restoration: boolean
           p_fill_with_bots: boolean
           p_host_id: string
-          p_team_mode: boolean
         }
         Returns: Json
       }
